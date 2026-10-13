@@ -48,9 +48,20 @@ describe("router", () => {
     expect(screen.getByRole("button", { name: text.app.logout })).toBeInTheDocument();
   });
 
-  it("renders the public view at /s/:token without a login", () => {
+  it("renders the public view at /s/:token without a login", async () => {
+    server.use(
+      http.get("*/api/v1/public/abc", () =>
+        HttpResponse.json(
+          { error: { code: "public_link_not_found", message: "x" } },
+          { status: 404 },
+        ),
+      ),
+    );
     renderRoute("/s/abc");
-    expect(screen.getByRole("heading", { name: text.editor.stubPublicView })).toBeInTheDocument();
+    expect(
+      await screen.findByRole("heading", { name: text.editor.publicNotFoundTitle }),
+    ).toBeInTheDocument();
+    expect(screen.queryByRole("navigation")).not.toBeInTheDocument();
   });
 
   it("renders the not-found page for an unknown path", () => {

@@ -1,1 +1,2 @@
-export { EditorPage, PublicViewPage } from "./stubs.jsx";
+export { EditorPage } from "./EditorPage.jsx";
+export { PublicViewPage } from "./PublicViewPage.jsx";
