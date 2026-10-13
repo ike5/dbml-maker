@@ -15,8 +15,8 @@ const canvasOnly = {
   message: "Only src/features/editor/canvas/ imports React Flow, elkjs, and html-to-image.",
 };
 const codeOnly = {
-  group: ["@codemirror/*", "codemirror"],
-  message: "Only src/features/editor/code/ imports CodeMirror.",
+  group: ["@codemirror/*", "@lezer/*", "codemirror"],
+  message: "Only src/features/editor/code/ imports CodeMirror and Lezer.",
 };
 const noFeatures = {
   regex: "(^|/)features(/|$)",
@@ -112,11 +112,19 @@ export default [
     rules: banImports([...base, deepImport(3)]),
   },
   {
-    files: ["src/features/editor/canvas/**/*.{js,jsx}"],
-    rules: banImports([dbmlOnly, codeOnly, deepImport(2), deepImport(3)]),
+    files: ["src/features/editor/canvas/*.{js,jsx}"],
+    rules: banImports([dbmlOnly, codeOnly, deepImport(2)]),
   },
   {
-    files: ["src/features/editor/code/**/*.{js,jsx}"],
-    rules: banImports([dbmlOnly, canvasOnly, deepImport(2), deepImport(3)]),
+    files: ["src/features/editor/canvas/*/**/*.{js,jsx}"],
+    rules: banImports([dbmlOnly, codeOnly, deepImport(3)]),
+  },
+  {
+    files: ["src/features/editor/code/*.{js,jsx}"],
+    rules: banImports([dbmlOnly, canvasOnly, deepImport(2)]),
+  },
+  {
+    files: ["src/features/editor/code/*/**/*.{js,jsx}"],
+    rules: banImports([dbmlOnly, canvasOnly, deepImport(3)]),
   },
 ];
