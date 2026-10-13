@@ -2,11 +2,12 @@ import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { handleMessage } from "./handler.js";
+import { handleParseMessage } from "./parse-handler.js";
+import { handleSqlMessage } from "./sql-handler.js";
 
 const DIR = dirname(fileURLToPath(import.meta.url));
 
-/** A fake worker that runs the handler in the same thread and keeps the URL for the tests. */
+/** A fake worker that runs the handler of its file in the same thread and keeps the URL for the tests. */
 class FakeWorker {
   static instances = [];
 
@@ -17,7 +18,11 @@ class FakeWorker {
   }
 
   postMessage(message) {
-    const response = handleMessage(message);
+    // The URL of the worker tells which handler to use.
+    const handle = String(this.url).includes("parse-worker")
+      ? handleParseMessage
+      : handleSqlMessage;
+    const response = handle(message);
     queueMicrotask(() => this.onmessage?.({ data: response }));
   }
 
@@ -46,15 +51,37 @@ describe("DBML module", () => {
     await parse(SOURCE);
     expect(FakeWorker.instances).toHaveLength(1);
     const [worker] = FakeWorker.instances;
-    expect(String(worker.url)).toMatch(/worker\.js(\?|$)/);
+    expect(String(worker.url)).toMatch(/parse-worker\.js(\?|$)/);
     expect(worker.options).toEqual({ type: "module" });
 
-    // The main module must not contain the parser. Only the worker imports it.
+    // A parse does not start the SQL worker. It starts at the first export.
+    await exportSql(SOURCE, "postgres");
+    expect(FakeWorker.instances).toHaveLength(2);
+    expect(String(FakeWorker.instances[1].url)).toMatch(/sql-worker\.js(\?|$)/);
+    expect(FakeWorker.instances[1].options).toEqual({ type: "module" });
+
+    // The main module must not contain a parser. Only the workers import them.
     const text = readFileSync(join(DIR, "index.js"), "utf8");
     const imports = [
       ...text.matchAll(/^\s*(?:import|export)\b[^;]*?from\s+["']([^"']+)["']/gm),
     ].map((match) => match[1]);
     expect(imports).toEqual(["./errors.js"]);
+  });
+
+  it("EDT-001 the parse worker does not load @dbml/core", () => {
+    // The files of the parse worker, and the files that they import in this folder.
+    const files = [
+      "parse-worker.js",
+      "parse-handler.js",
+      "parse-core.js",
+      "raw-db.js",
+      "handler.js",
+    ];
+    for (const file of files) {
+      const text = readFileSync(join(DIR, file), "utf8");
+      expect(text).not.toMatch(/from\s+["']@dbml\/core/);
+      expect(text).not.toMatch(/from\s+["']\.\/sql-/);
+    }
   });
 
   it("EDT-002 a parse error gives the line and the column", async () => {

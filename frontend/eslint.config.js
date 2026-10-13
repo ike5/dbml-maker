@@ -7,8 +7,8 @@ import reactHooks from "eslint-plugin-react-hooks";
 const banImports = (patterns) => ({ "no-restricted-imports": ["error", { patterns }] });
 
 const dbmlOnly = {
-  group: ["@dbml/core", "@dbml/core/*"],
-  message: "Only src/lib/dbml/ imports @dbml/core.",
+  group: ["@dbml/core", "@dbml/core/*", "@dbml/parse", "@dbml/parse/*"],
+  message: "Only src/lib/dbml/ imports @dbml/core and @dbml/parse.",
 };
 const canvasOnly = {
   group: ["@xyflow/react", "@xyflow/react/*", "elkjs", "elkjs/*", "html-to-image"],

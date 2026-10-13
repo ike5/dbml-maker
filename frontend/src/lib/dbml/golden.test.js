@@ -6,8 +6,9 @@ import { readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
-import { exportSqlSource, importSqlText, parseSource } from "./core.js";
 import { EXPORT_DIALECTS, IMPORT_DIALECTS } from "./index.js";
+import { parseSource } from "./parse-core.js";
+import { exportSqlSource, importSqlText } from "./sql-core.js";
 
 const FIXTURES = join(dirname(fileURLToPath(import.meta.url)), "__fixtures__");
 /* global process */

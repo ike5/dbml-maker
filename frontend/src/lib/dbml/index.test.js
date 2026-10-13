@@ -1,9 +1,12 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { handleMessage } from "./handler.js";
+import { handleParseMessage } from "./parse-handler.js";
+import { handleSqlMessage } from "./sql-handler.js";
 
-/** A fake worker that runs the message handler in the same thread, but answers later. */
+/** A fake worker that runs the message handler of its file in the same thread, but answers later. */
 class FakeWorker {
   static instances = [];
+  // If true, the SQL worker crashes at each message. The parse worker answers as before.
+  static crashSql = false;
 
   constructor(url, options) {
     this.url = url;
@@ -12,7 +15,15 @@ class FakeWorker {
   }
 
   postMessage(message) {
-    const response = handleMessage(message);
+    if (FakeWorker.crashSql && String(this.url).includes("sql-worker")) {
+      queueMicrotask(() => this.onerror?.({ message: "boom" }));
+      return;
+    }
+    // The URL of the worker tells which handler to use.
+    const handle = String(this.url).includes("parse-worker")
+      ? handleParseMessage
+      : handleSqlMessage;
+    const response = handle(message);
     queueMicrotask(() => this.onmessage?.({ data: response }));
   }
 
@@ -24,6 +35,7 @@ let DbmlError, exportSql, importSql, parse;
 // The module keeps one worker for its lifetime. A new module for each test gives a new worker.
 beforeEach(async () => {
   FakeWorker.instances = [];
+  FakeWorker.crashSql = false;
   vi.stubGlobal("Worker", FakeWorker);
   vi.resetModules();
   ({ DbmlError, exportSql, importSql, parse } = await import("./index.js"));
@@ -51,6 +63,13 @@ describe("parse", () => {
     await parse("");
     expect(FakeWorker.instances).toHaveLength(1);
   });
+
+  it("does not start the SQL worker", async () => {
+    await parse("");
+    expect(FakeWorker.instances.map((worker) => String(worker.url))).toEqual([
+      expect.stringMatching(/parse-worker\.js/),
+    ]);
+  });
 });
 
 describe("exportSql", () => {
@@ -67,6 +86,26 @@ describe("exportSql", () => {
 
   it("rejects an unknown dialect", async () => {
     await expect(exportSql("", "sqlite")).rejects.toBeInstanceOf(DbmlError);
+  });
+});
+
+describe("workers", () => {
+  it("starts the SQL worker at the first export, and shares it with the import", async () => {
+    await exportSql("Table a { id int }", "postgres");
+    await importSql("CREATE TABLE a (id int);", "postgres");
+    expect(FakeWorker.instances).toHaveLength(1);
+    expect(String(FakeWorker.instances[0].url)).toMatch(/sql-worker\.js/);
+  });
+
+  it("rejects only the pending calls of a crashed worker", async () => {
+    FakeWorker.crashSql = true;
+    const [parsed, exported] = await Promise.allSettled([
+      parse("Table a { id int }"),
+      exportSql("Table a { id int }", "postgres"),
+    ]);
+    expect(parsed.status).toBe("fulfilled");
+    expect(exported.status).toBe("rejected");
+    expect(exported.reason.message).toBe("boom");
   });
 });
 
