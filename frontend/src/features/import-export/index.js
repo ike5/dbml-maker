@@ -1,1 +1,1 @@
-export { ExportDialog, ImportDialog } from "./stubs.jsx";
+export { ExportDialog, ImportDialog } from "./lazy.jsx";
