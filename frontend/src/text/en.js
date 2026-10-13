@@ -76,15 +76,57 @@ export const text = {
 
   // Owner: diagrams (src/features/diagrams/)
   diagrams: {
-    stubList: "My diagrams",
-    stubTrash: "Trash",
+    title: "Diagrams",
+    tabsLabel: "Diagram lists",
+    tabMine: "My diagrams",
+    tabShared: "Shared with me",
+    newDiagram: "New diagram",
+    importDiagram: "Import",
+    defaultName: "Untitled diagram",
+    nameLabel: "Name",
+    nameEmpty: "Type a name.",
+    nameTooLong: "The name must have 200 characters or fewer.",
+    make: "Make",
+    rename: "Rename",
+    renameTitle: "Rename the diagram",
+    open: "Open",
+    duplicate: "Duplicate",
+    moveToTrash: "Move to trash",
+    trashTitle: "Move the diagram to the trash",
+    trashBody:
+      "The diagram {name} goes to the trash. You can restore it for 30 days. After that, the system deletes it.",
     copyOf: "Copy of {name}",
+    duplicated: "The system made a copy of the diagram.",
+    openCopy: "Open the copy",
+    changedBy: "Changed {time} by {person}",
+    changed: "Changed {time}",
+    justNow: "just now",
+    roleOwner: "Owner",
+    roleEditor: "Editor",
+    roleViewer: "Viewer",
+    actionsFor: "Actions for {name}",
+    loadMore: "Load more",
+    emptyMine: "You have no diagrams. Make a new diagram, or import a file.",
+    emptyShared: "No person shared a diagram with you.",
+    trashHeading: "Trash",
+    trashEmpty: "The trash is empty.",
+    trashedAt: "Moved to trash {time}",
+    deletesOn: "The system deletes it on {date}",
+    restore: "Restore",
+    deletePermanently: "Delete permanently",
+    deleteTitle: "Delete the diagram permanently",
+    deleteBody: "The system deletes the diagram {name} for ever. You cannot undo this action.",
   },
 
   // Owner: editor (src/features/editor/)
   editor: {
     stubEditor: "Editor",
     stubPublicView: "Public view",
+  },
+
+  // Owner: editor (src/features/editor/code/)
+  editorCode: {
+    defaultLabel: "DBML source",
   },
 
   // Owner: versions (src/features/versions/)

@@ -1,6 +1,22 @@
 name: dbml-maker
 
-# A later task adds the services web, worker, and migrate (DESIGN.md section 16.1).
+# The app services (migrate, web, worker) use one image (DESIGN.md sections 16.1 and 16.2).
+# "docker compose up -d db mailpit" starts only the two services that the developer needs.
+x-app: &app
+  build:
+    context: .
+    args:
+      APP_RELEASE: local
+  image: dbml-maker:local
+  environment:
+    # Fixed value for local work only. Never use it in production.
+    DJANGO_SECRET_KEY: local-only-secret-key-do-not-use-in-production
+    DATABASE_URL: postgres://dbml:dbml@db:5432/dbml
+    PUBLIC_BASE_URL: http://localhost:${WEB_PORT:-8000}
+    EMAIL_HOST: mailpit
+    EMAIL_PORT: "1025"
+    DEFAULT_FROM_EMAIL: noreply@localhost
+
 services:
   db:
     image: postgres:18
@@ -24,6 +40,37 @@ services:
     ports:
       - "127.0.0.1:1025:1025"
       - "127.0.0.1:8025:8025"
+
+  migrate:
+    <<: *app
+    command: sh -c "python manage.py migrate --noinput && python manage.py createcachetable"
+    restart: "no"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  web:
+    <<: *app
+    ports:
+      - "127.0.0.1:${WEB_PORT:-8000}:8000"
+    healthcheck:
+      # The slim image has no curl.
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/healthz', timeout=3)"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+
+  worker:
+    <<: *app
+    command: python manage.py procrastinate worker
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      mailpit:
+        condition: service_started
 
 volumes:
   db-data:
