@@ -31,20 +31,25 @@ Opus 5.5 (the main session) plans, designs, and orchestrates the development. So
 5. Opus 5.5 examines each result against `DESIGN.md` and the CI gates. It tells the user that the work is complete
    only after this examination.
 6. If a task changes a boundary, Opus 5.5 changes `DESIGN.md` in the same change.
+7. A worktree of the Agent tool starts from `main`, not from the current branch. The first step of each task
+   specification moves the worktree to the current commit (`git reset --hard <commit>`). The agent then makes one
+   commit. Opus 5.5 applies it with `git cherry-pick -n`, examines it, runs the gates, and commits.
+8. Parallel agents use the same `db` container. Each backend agent sets its own database name in `DATABASE_URL`, so
+   that the test databases do not collide.
 
 Opus 5.5 writes the design documents (`CLAUDE.md`, `AGENTS.md`, and `DESIGN.md`), because they are design work.
 
 ## Project status
 
-The repository contains documents only. There is no source code yet.
+Release 1 is built. The code agrees with `DESIGN.md`.
 
-- `AGENTS.md` gives the overview. `DESIGN.md` gives the target design.
-- The root `pyproject.toml` is a placeholder. The first backend change moves it to `backend/pyproject.toml`. Then uv
-  makes the environment in `backend/.venv`.
-- There is no README, no test suite, and no lint configuration yet.
+- `backend/` has the five apps of `DESIGN.md` §3.3, with their tests and the import rules (`backend/.importlinter`).
+- `frontend/` has the SPA with the six features of `DESIGN.md` §12.10, the unit tests, and the Playwright tests in
+  `frontend/e2e/`.
+- `Dockerfile`, `docker-compose.yml`, `.github/workflows/`, and `README.md` (the operator guide) exist.
+- `AGENTS.md` gives the overview. `DESIGN.md` is the architecture reference.
 
-When the code starts to exist, change this section. If the code and `DESIGN.md` do not agree, correct one of them in
-the same change.
+If the code and `DESIGN.md` do not agree, correct one of them in the same change.
 
 ## Tools
 
@@ -55,20 +60,22 @@ the same change.
   `pythonpath = ["."]`.
 - **Frontend.** npm manages the packages. Use Node 24 LTS.
 - **Services.** Docker Compose runs PostgreSQL 18 and Mailpit for local work (`DESIGN.md` §16.1).
-- Commit `uv.lock` and `package-lock.json`. Git ignores `.venv`, `.idea`, `.env`, and `__pycache__`. When the
-  frontend exists, add `node_modules/` and `frontend/dist/` to `.gitignore`.
+- Commit `uv.lock` and `package-lock.json`. Git ignores `.venv`, `.idea`, `.env`, `__pycache__`, `node_modules/`,
+  `frontend/dist/`, the tool caches, and `.claude/worktrees/`.
 
 ## Commands
 
 ```sh
 # Services
-docker compose up -d db mailpit                 # Start PostgreSQL 18 and Mailpit.
+docker compose up -d db mailpit                 # Start PostgreSQL 18 (host port 5433) and Mailpit (port 8025).
+docker compose up -d --build --wait             # Start the full stack at http://localhost:8000.
 
 # Backend: run from backend/
 uv sync                                         # Make or change .venv from pyproject.toml and uv.lock.
 uv add <pkg>                                    # Add a runtime dependency.
 uv add --dev <pkg>                              # Add a dev dependency, for example pytest or ruff.
 uv run python manage.py migrate                 # Apply the migrations.
+uv run python manage.py createcachetable        # Make the cache table. The rate limits need it.
 uv run python manage.py runserver               # Start Django on port 8000.
 uv run python manage.py procrastinate worker    # Start the job worker.
 uv run pytest                                   # Run the backend tests.
@@ -77,6 +84,7 @@ uv run pytest                                   # Run the backend tests.
 npm ci                                          # Install the packages from package-lock.json.
 npm run dev                                     # Start Vite on port 5173, with a proxy to Django.
 npm run test -- --run                           # Run Vitest one time.
+npx playwright test                             # Run the end-to-end tests against the full stack.
 ```
 
 The full list of CI gates is in `AGENTS.md`, section "Work in the repository". Run all the gates before you say that

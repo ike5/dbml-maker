@@ -11,7 +11,7 @@ DBML Maker is an open source replacement for [dbdiagram.io](https://dbdiagram.io
 and sees the database diagram next to it. The user can save diagrams, share them, restore old versions, and import and
 export them. (→ §1)
 
-**Status:** the repository contains documents only. `DESIGN.md` is the target design.
+**Status:** release 1 is built. The code agrees with `DESIGN.md`.
 
 ## Technology stack
 
@@ -110,7 +110,7 @@ Notes on these commands:
 - `npm run test` starts Vitest in watch mode. Add `-- --run` for one run.
 - Playwright must have its browsers. Run `npx playwright install` one time.
 - `makemigrations --check` fails when a model change has no migration. Make the migration. Do not skip the check.
-- Run the `uv` commands from `backend/`. The root `pyproject.toml` is a placeholder (see `CLAUDE.md`).
+- Run the `uv` commands from `backend/`. The repository root has no `pyproject.toml`.
 
 **Conventions:**
 

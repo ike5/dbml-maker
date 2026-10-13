@@ -1,7 +1,7 @@
 # DBML Maker: Design Reference
 
-**Status:** target design. No code exists yet. When you write the code, make it agree with this document. If the code
-must be different, change this document in the same commit.
+**Status:** release 1 is built, and the code agrees with this document. When you change the code, keep them in
+agreement. If the code must be different, change this document in the same commit.
 
 This is the full architecture reference for DBML Maker. It is long because it must be complete. **Do not read it from
 start to end.** Start with [`AGENTS.md`](AGENTS.md), which gives the overview. Then go to the section for your task.
@@ -112,7 +112,7 @@ CLAUDE.md                    Rules for Claude Code
 DESIGN.md                    This document
 ```
 
-The root `pyproject.toml` is a placeholder. The first backend change moves it to `backend/pyproject.toml`.
+The repository root has no `pyproject.toml`. The backend project is in `backend/pyproject.toml`.
 
 ---
 
@@ -1112,9 +1112,9 @@ canvas: the user moves a table --> editor store: layout
 editor store --(source + layout, 1 s after the last change)--> autosave: PATCH with If-Match --> API
 ```
 
-- **Parse.** The parser runs in a Web Worker (the parse worker of `lib/dbml/`, §13.2). The UI thread never runs the parser (EDT-001). If
-  the source has errors, the canvas keeps the last correct parse result. The code pane shows each error at its line
-  and column (EDT-002).
+- **Parse.** The parser runs in a Web Worker (the parse worker of `lib/dbml/`, §13.1). The UI thread never runs the
+  parser (EDT-001). If the source has errors, the canvas keeps the last correct parse result. The code pane shows each
+  error at its line and column (EDT-002).
 - **Autosave (EDT-003).** The editor saves 1 second after the last change. It also saves when the page becomes hidden
   (`visibilitychange`), with `fetch` and `keepalive: true`. Only one save is in progress at a time. Changes that occur
   during a save go into the next save.
@@ -1634,7 +1634,6 @@ current apps. For each module, this section gives the owner app, its dependencie
 
 ### 18.1 Gaps
 
-- There is no code yet. This document is the target design.
 - v1 has no PDF export, no undo for the layout, no sticky notes, and no real-time edit. If two persons edit at the same
   time, one of them gets a conflict (§7.3).
 - v1 has no team workspaces, no API tokens, and no server-side DBML validation.
