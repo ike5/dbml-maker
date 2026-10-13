@@ -66,12 +66,67 @@ export const text = {
 
   // Owner: auth (src/features/auth/)
   auth: {
-    stubLogin: "Log in",
-    stubSignup: "Sign up",
-    stubVerifyEmail: "Verify your email address",
-    stubResetRequest: "Reset your password",
-    stubReset: "Set a new password",
-    stubSettings: "Settings",
+    email: "Email address",
+    password: "Password",
+    passwordHint: "Use 10 characters or more. Do not use a common password.",
+    newPassword: "New password",
+    currentPassword: "Current password",
+    login: {
+      title: "Log in",
+      submit: "Log in",
+      toSignup: "Make an account",
+      toReset: "Forgot your password?",
+      unverified:
+        "You did not verify your email address. Open the link in the verification email, then log in again.",
+      resetDone: "The system set your new password. Log in with it.",
+      accountDeleted: "The system deleted your account.",
+    },
+    signup: {
+      title: "Sign up",
+      submit: "Sign up",
+      toLogin: "Log in to an existing account",
+      sent: "The system sent an email to the address. Open the link in the email to verify your address.",
+      closed: "Sign-up is closed. The operator of this system can make accounts for users.",
+    },
+    verify: {
+      title: "Verify your email address",
+      working: "The system verifies your email address.",
+      done: "Your email address is verified. Log in to continue.",
+      invalid: "The link is not correct, or it is old. Log in to ask for a new link.",
+      toLogin: "Go to the login page",
+    },
+    resetRequest: {
+      title: "Reset your password",
+      submit: "Send the reset email",
+      sent: "If an account has this address, the system sent an email. Open the link in the email.",
+      toLogin: "Back to the login page",
+    },
+    reset: {
+      title: "Set a new password",
+      submit: "Set the password",
+      invalid: "The link is not correct, or it is old. Ask for a new email.",
+      toRequest: "Ask for a new email",
+    },
+    settings: {
+      title: "Settings",
+      emailTitle: "Email address",
+      currentEmail: "Your email address is {email}.",
+      newEmail: "New email address",
+      emailSubmit: "Change the address",
+      emailSent:
+        "The system sent a verification email to {email}. The address changes after you open the link in the email.",
+      passwordTitle: "Password",
+      passwordSubmit: "Change the password",
+      passwordChanged: "The system changed your password.",
+      deleteTitle: "Delete account",
+      deleteBody:
+        "The system deletes your account and all diagrams in your personal workspace. You cannot undo this action.",
+      deleteOpen: "Delete account",
+      deleteDialogTitle: "Delete your account?",
+      deleteDialogBody:
+        "The system deletes all diagrams in your personal workspace. You cannot undo this action. Enter your password to continue.",
+      deleteConfirm: "Delete the account",
+    },
   },
 
   // Owner: diagrams (src/features/diagrams/)
@@ -127,6 +182,31 @@ export const text = {
   // Owner: editor (src/features/editor/code/)
   editorCode: {
     defaultLabel: "DBML source",
+  },
+
+  // Owner: editor canvas (src/features/editor/canvas/)
+  editorCanvas: {
+    canvasLabel: "Diagram canvas",
+    controlsLabel: "Canvas controls",
+    zoomIn: "Zoom in",
+    zoomOut: "Zoom out",
+    fitView: "Fit the diagram to the view",
+    markPrimaryKey: "PK",
+    markNotNull: "NN",
+    markUnique: "UQ",
+    titlePrimaryKey: "Primary key",
+    titleNotNull: "Not null",
+    titleUnique: "Unique",
+    tableNote: "Note: {note}",
+    columnNote: "{name}. Note: {note}",
+    // {from} and {to} are table and column names. {kind} is one of the four cardinality texts.
+    refTitle: "Ref: {from} to {to} ({kind})",
+    cardinality: {
+      "1-1": "one to one",
+      "1-n": "one to many",
+      "n-1": "many to one",
+      "n-n": "many to many",
+    },
   },
 
   // Owner: versions (src/features/versions/)

@@ -1,0 +1,8 @@
+Project shop {
+  database_type: 'PostgreSQL'
+  Note: 'The database of the shop.'
+}
+
+Table items {
+  id integer [pk]
+}

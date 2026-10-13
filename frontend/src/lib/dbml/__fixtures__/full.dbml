@@ -1,0 +1,87 @@
+Project shop {
+  database_type: 'PostgreSQL'
+  Note: 'A shop with two schemas.'
+}
+
+Enum core.order_status {
+  pending [note: 'The customer has not paid.']
+  paid
+  shipped
+}
+
+Table core.users as U [headercolor: #3498DB, note: 'The customers.'] {
+  id integer [pk, increment]
+  email varchar(255) [not null, unique, note: 'Unique and lower case.']
+  name varchar(100) [default: 'anonymous']
+  score decimal(10,2) [default: -1.5]
+  active boolean [not null, default: true]
+  created_at timestamp [default: `now()`]
+  retries integer [default: 0]
+  region_id integer [ref: > core.regions.id]
+
+  Note: '''
+  The first line of the note.
+  The second line of the note.
+  '''
+
+  indexes {
+    (email, name) [unique, name: 'users_email_name']
+    `lower(name)` [type: hash, note: 'Search by name.']
+    created_at
+  }
+}
+
+Table core.regions {
+  id integer [pk]
+  name varchar(50)
+}
+
+Table core.orders {
+  id integer [pk]
+  user_id integer [not null]
+  status core.order_status [not null, default: 'pending']
+  tags varchar[]
+}
+
+Table sales.invoices {
+  order_id integer
+  line integer
+  total decimal(10,2)
+
+  indexes {
+    (order_id, line) [pk]
+  }
+}
+
+Table sales.invoice_notes {
+  order_id integer
+  line integer
+  text text
+}
+
+Table sales.profiles {
+  user_id integer [pk]
+}
+
+Table sales.tags {
+  id integer [pk]
+}
+
+Table sales.order_tags {
+  id integer [pk]
+}
+
+TableGroup customers [color: #E67E22] {
+  core.users
+  core.regions
+}
+
+TableGroup billing {
+  sales.invoices
+  sales.invoice_notes
+}
+
+Ref fk_orders_user: core.orders.user_id > core.users.id [delete: cascade, update: set null]
+Ref: sales.invoice_notes.(order_id, line) > sales.invoices.(order_id, line)
+Ref: sales.profiles.user_id - core.users.id
+Ref: sales.tags.id <> sales.order_tags.id

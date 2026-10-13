@@ -1,0 +1,95 @@
+{
+  "project": null,
+  "tables": [
+    {
+      "key": "public.users",
+      "schema": "public",
+      "name": "users",
+      "alias": null,
+      "note": null,
+      "headerColor": null,
+      "columns": [
+        {
+          "name": "id",
+          "type": "integer",
+          "pk": true,
+          "notNull": false,
+          "unique": false,
+          "increment": false,
+          "default": null,
+          "note": null
+        },
+        {
+          "name": "name",
+          "type": "varchar(100)",
+          "pk": false,
+          "notNull": true,
+          "unique": false,
+          "increment": false,
+          "default": null,
+          "note": null
+        }
+      ],
+      "indexes": []
+    },
+    {
+      "key": "public.posts",
+      "schema": "public",
+      "name": "posts",
+      "alias": null,
+      "note": null,
+      "headerColor": null,
+      "columns": [
+        {
+          "name": "id",
+          "type": "integer",
+          "pk": true,
+          "notNull": false,
+          "unique": false,
+          "increment": false,
+          "default": null,
+          "note": null
+        },
+        {
+          "name": "user_id",
+          "type": "integer",
+          "pk": false,
+          "notNull": false,
+          "unique": false,
+          "increment": false,
+          "default": null,
+          "note": null
+        },
+        {
+          "name": "title",
+          "type": "varchar(200)",
+          "pk": false,
+          "notNull": false,
+          "unique": false,
+          "increment": false,
+          "default": null,
+          "note": null
+        }
+      ],
+      "indexes": []
+    }
+  ],
+  "refs": [
+    {
+      "key": "public.posts(user_id)-public.users(id)",
+      "from": {
+        "tableKey": "public.posts",
+        "columns": ["user_id"]
+      },
+      "to": {
+        "tableKey": "public.users",
+        "columns": ["id"]
+      },
+      "cardinality": "n-1",
+      "onDelete": null,
+      "onUpdate": null
+    }
+  ],
+  "enums": [],
+  "groups": []
+}

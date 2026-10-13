@@ -1,0 +1,32 @@
+{
+  "project": {
+    "name": "shop",
+    "note": "The database of the shop."
+  },
+  "tables": [
+    {
+      "key": "public.items",
+      "schema": "public",
+      "name": "items",
+      "alias": null,
+      "note": null,
+      "headerColor": null,
+      "columns": [
+        {
+          "name": "id",
+          "type": "integer",
+          "pk": true,
+          "notNull": false,
+          "unique": false,
+          "increment": false,
+          "default": null,
+          "note": null
+        }
+      ],
+      "indexes": []
+    }
+  ],
+  "refs": [],
+  "enums": [],
+  "groups": []
+}

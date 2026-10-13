@@ -1,0 +1,9 @@
+[
+  {
+    "message": "Table 'ghosts' does not exist in Schema 'public'",
+    "line": 5,
+    "column": 17,
+    "endLine": 5,
+    "endColumn": 23
+  }
+]

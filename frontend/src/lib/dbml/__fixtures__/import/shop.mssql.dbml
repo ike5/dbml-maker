@@ -1,0 +1,13 @@
+Table "users" {
+  "id" "int IDENTITY(1,1)" [pk]
+  "email" nvarchar(255) [unique, not null]
+  "active" bit [not null, default: 1]
+}
+
+Table "orders" {
+  "id" "int IDENTITY(1,1)" [pk]
+  "user_id" int [not null]
+  "total" decimal(10,2) [default: 0]
+}
+
+Ref "fk_orders_user":"users"."id" < "orders"."user_id"

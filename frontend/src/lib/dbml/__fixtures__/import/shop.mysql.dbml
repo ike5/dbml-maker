@@ -1,0 +1,21 @@
+Table "users" {
+  "id" int [pk, not null, increment]
+  "email" varchar(255) [not null]
+  "active" tinyint(1) [not null, default: 1]
+
+  Indexes {
+    email [unique, name: "users_email"]
+  }
+}
+
+Table "orders" {
+  "id" int [pk, not null, increment]
+  "user_id" int [not null]
+  "total" decimal(10,2) [default: 0]
+
+  Indexes {
+    user_id [name: "orders_user_idx"]
+  }
+}
+
+Ref "fk_orders_user":"users"."id" <? "orders"."user_id"

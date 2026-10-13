@@ -1,0 +1,9 @@
+[
+  {
+    "message": "A column must have a type",
+    "line": 3,
+    "column": 3,
+    "endLine": 3,
+    "endColumn": 7
+  }
+]

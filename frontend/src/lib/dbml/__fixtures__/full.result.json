@@ -1,0 +1,465 @@
+{
+  "project": {
+    "name": "shop",
+    "note": "A shop with two schemas."
+  },
+  "tables": [
+    {
+      "key": "core.users",
+      "schema": "core",
+      "name": "users",
+      "alias": "U",
+      "note": "The first line of the note.\nThe second line of the note.\n",
+      "headerColor": "#3498DB",
+      "columns": [
+        {
+          "name": "id",
+          "type": "integer",
+          "pk": true,
+          "notNull": false,
+          "unique": false,
+          "increment": true,
+          "default": null,
+          "note": null
+        },
+        {
+          "name": "email",
+          "type": "varchar(255)",
+          "pk": false,
+          "notNull": true,
+          "unique": true,
+          "increment": false,
+          "default": null,
+          "note": "Unique and lower case."
+        },
+        {
+          "name": "name",
+          "type": "varchar(100)",
+          "pk": false,
+          "notNull": false,
+          "unique": false,
+          "increment": false,
+          "default": "'anonymous'",
+          "note": null
+        },
+        {
+          "name": "score",
+          "type": "decimal(10,2)",
+          "pk": false,
+          "notNull": false,
+          "unique": false,
+          "increment": false,
+          "default": "-1.5",
+          "note": null
+        },
+        {
+          "name": "active",
+          "type": "boolean",
+          "pk": false,
+          "notNull": true,
+          "unique": false,
+          "increment": false,
+          "default": "true",
+          "note": null
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp",
+          "pk": false,
+          "notNull": false,
+          "unique": false,
+          "increment": false,
+          "default": "now()",
+          "note": null
+        },
+        {
+          "name": "retries",
+          "type": "integer",
+          "pk": false,
+          "notNull": false,
+          "unique": false,
+          "increment": false,
+          "default": "0",
+          "note": null
+        },
+        {
+          "name": "region_id",
+          "type": "integer",
+          "pk": false,
+          "notNull": false,
+          "unique": false,
+          "increment": false,
+          "default": null,
+          "note": null
+        }
+      ],
+      "indexes": [
+        {
+          "columns": ["email", "name"],
+          "unique": true,
+          "pk": false,
+          "name": "users_email_name",
+          "type": null,
+          "note": null
+        },
+        {
+          "columns": ["lower(name)"],
+          "unique": false,
+          "pk": false,
+          "name": null,
+          "type": "hash",
+          "note": "Search by name."
+        },
+        {
+          "columns": ["created_at"],
+          "unique": false,
+          "pk": false,
+          "name": null,
+          "type": null,
+          "note": null
+        }
+      ]
+    },
+    {
+      "key": "core.regions",
+      "schema": "core",
+      "name": "regions",
+      "alias": null,
+      "note": null,
+      "headerColor": null,
+      "columns": [
+        {
+          "name": "id",
+          "type": "integer",
+          "pk": true,
+          "notNull": false,
+          "unique": false,
+          "increment": false,
+          "default": null,
+          "note": null
+        },
+        {
+          "name": "name",
+          "type": "varchar(50)",
+          "pk": false,
+          "notNull": false,
+          "unique": false,
+          "increment": false,
+          "default": null,
+          "note": null
+        }
+      ],
+      "indexes": []
+    },
+    {
+      "key": "core.orders",
+      "schema": "core",
+      "name": "orders",
+      "alias": null,
+      "note": null,
+      "headerColor": null,
+      "columns": [
+        {
+          "name": "id",
+          "type": "integer",
+          "pk": true,
+          "notNull": false,
+          "unique": false,
+          "increment": false,
+          "default": null,
+          "note": null
+        },
+        {
+          "name": "user_id",
+          "type": "integer",
+          "pk": false,
+          "notNull": true,
+          "unique": false,
+          "increment": false,
+          "default": null,
+          "note": null
+        },
+        {
+          "name": "status",
+          "type": "core.order_status",
+          "pk": false,
+          "notNull": true,
+          "unique": false,
+          "increment": false,
+          "default": "'pending'",
+          "note": null
+        },
+        {
+          "name": "tags",
+          "type": "varchar[]",
+          "pk": false,
+          "notNull": false,
+          "unique": false,
+          "increment": false,
+          "default": null,
+          "note": null
+        }
+      ],
+      "indexes": []
+    },
+    {
+      "key": "sales.invoices",
+      "schema": "sales",
+      "name": "invoices",
+      "alias": null,
+      "note": null,
+      "headerColor": null,
+      "columns": [
+        {
+          "name": "order_id",
+          "type": "integer",
+          "pk": false,
+          "notNull": false,
+          "unique": false,
+          "increment": false,
+          "default": null,
+          "note": null
+        },
+        {
+          "name": "line",
+          "type": "integer",
+          "pk": false,
+          "notNull": false,
+          "unique": false,
+          "increment": false,
+          "default": null,
+          "note": null
+        },
+        {
+          "name": "total",
+          "type": "decimal(10,2)",
+          "pk": false,
+          "notNull": false,
+          "unique": false,
+          "increment": false,
+          "default": null,
+          "note": null
+        }
+      ],
+      "indexes": [
+        {
+          "columns": ["order_id", "line"],
+          "unique": false,
+          "pk": true,
+          "name": null,
+          "type": null,
+          "note": null
+        }
+      ]
+    },
+    {
+      "key": "sales.invoice_notes",
+      "schema": "sales",
+      "name": "invoice_notes",
+      "alias": null,
+      "note": null,
+      "headerColor": null,
+      "columns": [
+        {
+          "name": "order_id",
+          "type": "integer",
+          "pk": false,
+          "notNull": false,
+          "unique": false,
+          "increment": false,
+          "default": null,
+          "note": null
+        },
+        {
+          "name": "line",
+          "type": "integer",
+          "pk": false,
+          "notNull": false,
+          "unique": false,
+          "increment": false,
+          "default": null,
+          "note": null
+        },
+        {
+          "name": "text",
+          "type": "text",
+          "pk": false,
+          "notNull": false,
+          "unique": false,
+          "increment": false,
+          "default": null,
+          "note": null
+        }
+      ],
+      "indexes": []
+    },
+    {
+      "key": "sales.profiles",
+      "schema": "sales",
+      "name": "profiles",
+      "alias": null,
+      "note": null,
+      "headerColor": null,
+      "columns": [
+        {
+          "name": "user_id",
+          "type": "integer",
+          "pk": true,
+          "notNull": false,
+          "unique": false,
+          "increment": false,
+          "default": null,
+          "note": null
+        }
+      ],
+      "indexes": []
+    },
+    {
+      "key": "sales.tags",
+      "schema": "sales",
+      "name": "tags",
+      "alias": null,
+      "note": null,
+      "headerColor": null,
+      "columns": [
+        {
+          "name": "id",
+          "type": "integer",
+          "pk": true,
+          "notNull": false,
+          "unique": false,
+          "increment": false,
+          "default": null,
+          "note": null
+        }
+      ],
+      "indexes": []
+    },
+    {
+      "key": "sales.order_tags",
+      "schema": "sales",
+      "name": "order_tags",
+      "alias": null,
+      "note": null,
+      "headerColor": null,
+      "columns": [
+        {
+          "name": "id",
+          "type": "integer",
+          "pk": true,
+          "notNull": false,
+          "unique": false,
+          "increment": false,
+          "default": null,
+          "note": null
+        }
+      ],
+      "indexes": []
+    }
+  ],
+  "refs": [
+    {
+      "key": "core.regions(id)-core.users(region_id)",
+      "from": {
+        "tableKey": "core.regions",
+        "columns": ["id"]
+      },
+      "to": {
+        "tableKey": "core.users",
+        "columns": ["region_id"]
+      },
+      "cardinality": "1-n",
+      "onDelete": null,
+      "onUpdate": null
+    },
+    {
+      "key": "fk_orders_user",
+      "from": {
+        "tableKey": "core.orders",
+        "columns": ["user_id"]
+      },
+      "to": {
+        "tableKey": "core.users",
+        "columns": ["id"]
+      },
+      "cardinality": "n-1",
+      "onDelete": "cascade",
+      "onUpdate": "set null"
+    },
+    {
+      "key": "sales.invoice_notes(order_id,line)-sales.invoices(order_id,line)",
+      "from": {
+        "tableKey": "sales.invoice_notes",
+        "columns": ["order_id", "line"]
+      },
+      "to": {
+        "tableKey": "sales.invoices",
+        "columns": ["order_id", "line"]
+      },
+      "cardinality": "n-1",
+      "onDelete": null,
+      "onUpdate": null
+    },
+    {
+      "key": "sales.profiles(user_id)-core.users(id)",
+      "from": {
+        "tableKey": "sales.profiles",
+        "columns": ["user_id"]
+      },
+      "to": {
+        "tableKey": "core.users",
+        "columns": ["id"]
+      },
+      "cardinality": "1-1",
+      "onDelete": null,
+      "onUpdate": null
+    },
+    {
+      "key": "sales.tags(id)-sales.order_tags(id)",
+      "from": {
+        "tableKey": "sales.tags",
+        "columns": ["id"]
+      },
+      "to": {
+        "tableKey": "sales.order_tags",
+        "columns": ["id"]
+      },
+      "cardinality": "n-n",
+      "onDelete": null,
+      "onUpdate": null
+    }
+  ],
+  "enums": [
+    {
+      "key": "core.order_status",
+      "schema": "core",
+      "name": "order_status",
+      "values": [
+        {
+          "name": "pending",
+          "note": "The customer has not paid."
+        },
+        {
+          "name": "paid",
+          "note": null
+        },
+        {
+          "name": "shipped",
+          "note": null
+        }
+      ]
+    }
+  ],
+  "groups": [
+    {
+      "name": "customers",
+      "tableKeys": ["core.users", "core.regions"],
+      "color": "#E67E22"
+    },
+    {
+      "name": "billing",
+      "tableKeys": ["sales.invoices", "sales.invoice_notes"],
+      "color": null
+    }
+  ]
+}

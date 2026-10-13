@@ -1,0 +1,17 @@
+Table "users" {
+  "id" integer [pk]
+  "email" varchar(255) [unique, not null]
+  "active" boolean [not null, default: true]
+}
+
+Table "orders" {
+  "id" integer [pk]
+  "user_id" integer [not null]
+  "total" numeric(10,2) [default: 0]
+
+  Indexes {
+    user_id [name: "orders_user_idx"]
+  }
+}
+
+Ref "fk_orders_user":"users"."id" <? "orders"."user_id"
