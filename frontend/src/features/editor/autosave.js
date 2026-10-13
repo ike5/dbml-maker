@@ -120,6 +120,9 @@ export function createAutosave({ store, save, onNameSaved, delay = AUTOSAVE_DELA
       window.addEventListener("beforeunload", onBeforeUnload);
     },
     stop() {
+      // The user can leave the page less than 1 second after a change. Save at once (EDT-003).
+      // The save in progress still applies its result. A flush with no changes does nothing.
+      flush({ keepalive: true });
       unsubscribe?.();
       unsubscribe = null;
       cancel();

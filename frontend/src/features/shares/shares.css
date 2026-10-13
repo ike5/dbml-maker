@@ -29,6 +29,10 @@
   min-width: 0;
   overflow-wrap: anywhere;
 }
+.share-row .input {
+  width: auto;
+  flex: none;
+}
 .share-form {
   display: flex;
   align-items: flex-start;

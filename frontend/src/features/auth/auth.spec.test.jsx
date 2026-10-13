@@ -178,7 +178,9 @@ describe("auth pages", () => {
     const user = userEvent.setup();
     renderRoutes([{ path: "/login", element: <LoginPage /> }], "/login");
     await fillLogin(user);
-    expect(await screen.findByRole("alert")).toHaveTextContent("Email or password is wrong.");
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      text.errors.byCode.email_password_mismatch,
+    );
   });
 
   it("verify page starts a session and goes to the start page", async () => {
@@ -275,7 +277,9 @@ describe("auth pages", () => {
           return HttpResponse.json(
             {
               status: 400,
-              errors: [{ code: "too_short", param: "new_password", message: "Too short." }],
+              errors: [
+                { code: "password_too_short", param: "new_password", message: "Too short." },
+              ],
             },
             { status: 400 },
           );
@@ -288,7 +292,7 @@ describe("auth pages", () => {
     await user.type(await screen.findByLabelText(t.currentPassword), "old-password-1");
     await user.type(screen.getByLabelText(t.newPassword), PASSWORD);
     await user.click(screen.getByRole("button", { name: t.settings.passwordSubmit }));
-    expect(await screen.findByText("Too short.")).toBeInTheDocument();
+    expect(await screen.findByText(text.errors.byCode.password_too_short)).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: t.settings.passwordSubmit }));
     await waitFor(() => expect(screen.getByText(t.settings.passwordChanged)).toBeInTheDocument());
   });
@@ -312,6 +316,8 @@ describe("auth pages", () => {
     const dialog = await screen.findByRole("dialog");
     await user.type(within(dialog).getByLabelText(t.password), "bad");
     await user.click(within(dialog).getByRole("button", { name: t.settings.deleteConfirm }));
-    expect(await within(dialog).findByText("Wrong password.")).toBeInTheDocument();
+    expect(
+      await within(dialog).findByText(text.errors.byCode.incorrect_password),
+    ).toBeInTheDocument();
   });
 });

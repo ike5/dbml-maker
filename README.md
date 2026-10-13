@@ -62,11 +62,12 @@ Run this command in a one-time container from the image:
 python manage.py createsuperuser
 ```
 
-The staff user can sign in to the Django admin at `/admin/`. A staff user can read all diagrams.
+The staff user can log in to the Django admin at `/admin/`. A staff user can read all diagrams.
 
 ## Configure
 
-- **Closed sign-up.** To stop new sign-ups, set `SIGNUP_ENABLED=false`. Then only the existing users can sign in.
+- **Closed sign-up.** To stop new sign-ups, set `SIGNUP_ENABLED=false`. Then only the existing users can log in. A
+  staff user makes new accounts in the Django admin.
 - **Email.** Set `EMAIL_HOST`, `EMAIL_PORT`, and, if the server needs them, `EMAIL_HOST_USER`, `EMAIL_HOST_PASSWORD`,
   and `EMAIL_USE_TLS`. Set `DEFAULT_FROM_EMAIL` to an address that the SMTP server accepts.
 - **`PUBLIC_BASE_URL`.** Set the exact origin that users type in the browser. Django calculates `ALLOWED_HOSTS` and

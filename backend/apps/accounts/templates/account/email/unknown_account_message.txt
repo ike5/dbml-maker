@@ -1,11 +1,11 @@
 {% extends "account/email/base_message.txt" %}
 
-{% block content %}{% autoescape off %}Someone asked to log in to DBML Maker with this email address:
+{% block content %}{% autoescape off %}A person asked to reset the password, or to log in, for DBML Maker with this email address:
 
 {{ email }}
 
-No account has this address. If it was you, you can sign up with this link:
+No account has this address. If you want an account, sign up with this link:
 
 {{ signup_url }}
 
-If it was not you, you can ignore this email.{% endautoescape %}{% endblock content %}
+If you did not ask for this, ignore this email.{% endautoescape %}{% endblock content %}

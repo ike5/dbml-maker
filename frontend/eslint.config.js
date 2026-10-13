@@ -58,7 +58,7 @@ export default [
   },
   {
     // Config files run in Node.
-    files: ["*.config.js"],
+    files: ["*.config.js", "e2e/**/*.js"],
     languageOptions: { globals: { ...globals.node } },
   },
   {

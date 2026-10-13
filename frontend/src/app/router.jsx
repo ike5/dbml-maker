@@ -1,3 +1,4 @@
+import { lazy, Suspense } from "react";
 import { createBrowserRouter, createMemoryRouter, Link, Outlet } from "react-router";
 import {
   LoginPage,
@@ -9,12 +10,33 @@ import {
   VerifyEmailPage,
 } from "../features/auth/index.js";
 import { DiagramListPage, TrashPage } from "../features/diagrams/index.js";
-import { EditorPage, PublicViewPage } from "../features/editor/index.js";
 import { text } from "../text/en.js";
-import { EmptyState } from "../ui/index.js";
+import { EmptyState, Spinner } from "../ui/index.js";
 import { AppShell } from "./AppShell.jsx";
 import { RouteErrorElement } from "./ErrorBoundary.jsx";
 import { ReleaseBanner } from "./ReleaseBanner.jsx";
+
+// The editor pages contain CodeMirror and React Flow. Load them only when a route needs them.
+const EditorPageLazy = lazy(() =>
+  import("../features/editor/index.js").then((m) => ({ default: m.EditorPage })),
+);
+const PublicViewPageLazy = lazy(() =>
+  import("../features/editor/index.js").then((m) => ({ default: m.PublicViewPage })),
+);
+
+function LazyPage({ children }) {
+  return (
+    <Suspense
+      fallback={
+        <div className="centered-layout">
+          <Spinner />
+        </div>
+      }
+    >
+      {children}
+    </Suspense>
+  );
+}
 
 function Root() {
   return (
@@ -62,7 +84,14 @@ export const routes = [
           { path: "/reset-password/:key", element: <ResetPasswordPage /> },
         ],
       },
-      { path: "/s/:token", element: <PublicViewPage /> },
+      {
+        path: "/s/:token",
+        element: (
+          <LazyPage>
+            <PublicViewPageLazy />
+          </LazyPage>
+        ),
+      },
       {
         element: (
           <RequireAuth>
@@ -73,7 +102,14 @@ export const routes = [
           { path: "/", element: <DiagramListPage /> },
           { path: "/trash", element: <TrashPage /> },
           { path: "/settings", element: <SettingsPage /> },
-          { path: "/d/:diagramId", element: <EditorPage /> },
+          {
+            path: "/d/:diagramId",
+            element: (
+              <LazyPage>
+                <EditorPageLazy />
+              </LazyPage>
+            ),
+          },
         ],
       },
       { path: "*", element: <NotFoundPage /> },

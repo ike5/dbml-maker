@@ -1,6 +1,6 @@
 Hello from DBML Maker.
 
-Your account and all its data are deleted. You cannot undo this action.
+We deleted your account and all its data. You cannot undo this action.
 
 If you did not ask for this, tell the operator of this installation.
 

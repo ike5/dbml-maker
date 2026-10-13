@@ -60,6 +60,20 @@ describe("autosave", () => {
     return result;
   };
 
+  it("EDT-003: stop saves a change that is not saved yet, one time", async () => {
+    const { store, save, autosave } = make();
+    store.getState().setSource("changed");
+    await vi.advanceTimersByTimeAsync(300);
+    autosave.stop();
+    expect(save).toHaveBeenCalledTimes(1);
+    expect(save.mock.calls[0][1]).toEqual({ source: "changed" });
+    await vi.advanceTimersByTimeAsync(2000);
+    expect(save).toHaveBeenCalledTimes(1);
+    expect(store.getState().saveState).toBe("saved");
+    autosave.stop();
+    expect(save).toHaveBeenCalledTimes(1);
+  });
+
   it("saves 1 second after the last change", async () => {
     const { store, save } = make();
     store.getState().setSource("a");

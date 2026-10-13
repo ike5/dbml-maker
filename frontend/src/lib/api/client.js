@@ -10,14 +10,16 @@ export class ApiError extends Error {
    * @param {string} details.code Stable error code.
    * @param {string} details.message Text from the server, or a general text.
    * @param {Record<string, string[]> | null} [details.fields] Messages for each field.
+   * @param {Record<string, string[]> | null} [details.fieldCodes] Error codes for each field (allauth only).
    * @param {unknown} [details.body] The parsed body of the response.
    */
-  constructor({ status, code, message, fields = null, body = null }) {
+  constructor({ status, code, message, fields = null, fieldCodes = null, body = null }) {
     super(message);
     this.name = "ApiError";
     this.status = status;
     this.code = code;
     this.fields = fields;
+    this.fieldCodes = fieldCodes;
     this.body = body;
   }
 }
@@ -106,14 +108,18 @@ function toApiError(status, body) {
     }
     if (Array.isArray(body.errors) && body.errors.length > 0) {
       const fields = {};
+      const fieldCodes = {};
       for (const item of body.errors) {
-        if (item.param) (fields[item.param] ??= []).push(item.message);
+        if (!item.param) continue;
+        (fields[item.param] ??= []).push(item.message);
+        (fieldCodes[item.param] ??= []).push(item.code);
       }
       return new ApiError({
         status,
         code: body.errors[0].code ?? "server_error",
         message: body.errors[0].message ?? "",
         fields: Object.keys(fields).length > 0 ? fields : null,
+        fieldCodes: Object.keys(fieldCodes).length > 0 ? fieldCodes : null,
         body,
       });
     }
