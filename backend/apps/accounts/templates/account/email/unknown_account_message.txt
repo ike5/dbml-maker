@@ -1,0 +1,11 @@
+{% extends "account/email/base_message.txt" %}
+
+{% block content %}{% autoescape off %}Someone asked to log in to DBML Maker with this email address:
+
+{{ email }}
+
+No account has this address. If it was you, you can sign up with this link:
+
+{{ signup_url }}
+
+If it was not you, you can ignore this email.{% endautoescape %}{% endblock content %}

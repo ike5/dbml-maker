@@ -79,7 +79,9 @@ ASGI_APPLICATION = "config.asgi.application"
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [],
+        # `allauth.account` is before `apps.accounts` in `INSTALLED_APPS`, so its templates would win. A folder in
+        # `DIRS` wins over each app folder. In this way, our email templates replace the templates of allauth.
+        "DIRS": [BASE_DIR / "apps" / "accounts" / "templates"],
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
@@ -171,6 +173,7 @@ DATA_UPLOAD_MAX_MEMORY_SIZE = 4 * 1024 * 1024
 HEADLESS_ONLY = True
 HEADLESS_FRONTEND_URLS = {
     "account_confirm_email": f"{PUBLIC_BASE_URL}/verify-email/{{key}}",
+    "account_reset_password": f"{PUBLIC_BASE_URL}/reset-password",
     "account_reset_password_from_key": f"{PUBLIC_BASE_URL}/reset-password/{{key}}",
     "account_signup": f"{PUBLIC_BASE_URL}/signup",
 }

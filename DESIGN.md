@@ -327,6 +327,8 @@ versions or the shares. If that person is logged in, the person can also duplica
 - Sign-up and password reset give the same response for known and unknown addresses (AUTH-003).
 - Rate limits (SEC-005): allauth `ACCOUNT_RATE_LIMITS` for login, sign-up, and password reset. DRF
   `ScopedRateThrottle` for our API. Both use the PostgreSQL cache.
+- The allauth limit `login_failed` (failed logins for one address) gives 400 with the code
+  `too_many_login_attempts`, not 429. The other limits give 429. The SPA shows both.
 - Before an account delete, the user must authenticate again (§5.4).
 
 ### 4.6 HTTP headers
@@ -386,8 +388,11 @@ a self-hosted system, because the operator controls the database.
   - `ACCOUNT_PREVENT_ENUMERATION = True`
 - `HEADLESS_FRONTEND_URLS` gives the SPA route for each URL in an email:
   - `account_confirm_email`: `/verify-email/{key}`
+  - `account_reset_password`: `/reset-password`. The "account exists" email of a sign-up needs it (AUTH-003).
   - `account_reset_password_from_key`: `/reset-password/{key}`
   - `account_signup`: `/signup`
+- `TEMPLATES[0]["DIRS"]` contains `apps/accounts/templates`. Then the STE email templates of `accounts` replace the
+  templates of allauth, because `allauth.account` is before `apps.accounts` in `INSTALLED_APPS`.
 - `ACCOUNT_ADAPTER = "apps.accounts.adapter.AccountAdapter"`:
   - `send_mail` renders the allauth email template. Then it calls `comms.api.send_email`.
   - `is_open_for_signup` returns `settings.SIGNUP_ENABLED` (AUTH-006).

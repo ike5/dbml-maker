@@ -1,0 +1,11 @@
+{% extends "account/email/base_message.txt" %}
+
+{% block content %}{% autoescape off %}This change was made to your account:
+
+{% block notification_message %}{% endblock notification_message %}
+
+If you do not know this change, secure your account now. Change your password at once. The change came from:
+
+- IP address: {{ ip }}
+- Browser: {{ user_agent }}
+- Date: {{ timestamp }}{% endautoescape %}{% endblock content %}

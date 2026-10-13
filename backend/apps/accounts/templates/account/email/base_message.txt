@@ -1,0 +1,6 @@
+{% autoescape off %}Hello from DBML Maker.
+
+{% block content %}{% endblock content %}
+
+The DBML Maker team
+{% endautoescape %}

@@ -1,0 +1,11 @@
+{% extends "account/email/base_message.txt" %}
+
+{% block content %}{% autoescape off %}Someone tried to sign up for DBML Maker with this email address:
+
+{{ email }}
+
+An account with this address exists already. If you forgot your password, reset it with this link:
+
+{{ password_reset_url }}
+
+If you did not try to sign up, you can ignore this email.{% endautoescape %}{% endblock content %}
