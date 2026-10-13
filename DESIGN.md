@@ -232,6 +232,8 @@ filters `Diagram.workspace_id` with the IDs that it gets. It does not join `work
   string, for example `diagram_conflict`. `message` is STE text for the user.
 - `apps/core/exceptions.py::api_exception_handler` is the DRF exception handler. It changes a `DomainError` into the
   error envelope (§11.3).
+- A `DomainError` can also have `extra`, a dict. The handler adds its keys to the error object. Example: the 412
+  response of a save adds `current` (§7.11).
 - Any other exception gives HTTP 500. The log record contains the traceback. The response contains no internal data.
 - Each service function is one transaction. If a workflow must change data in two apps, the upper app calls the
   `api.py` of the lower app inside its own transaction.
@@ -260,6 +262,11 @@ filters `Diagram.workspace_id` with the IDs that it gets. It does not join `work
   never uses them.
 - Cookie settings (SEC-003): `SESSION_COOKIE_HTTPONLY = True`, `SESSION_COOKIE_SECURE = True` in production,
   `SESSION_COOKIE_SAMESITE = "Lax"`, and `SESSION_COOKIE_AGE` of 14 days.
+- The `prod` settings set `SESSION_COOKIE_SECURE` and `CSRF_COOKIE_SECURE` to `True` only if `PUBLIC_BASE_URL`
+  starts with `https://`. The local Docker Compose stack (§16.1) uses `http://localhost:8000`. A browser does not
+  send a `Secure` cookie over HTTP, so the login on that stack would fail.
+- DRF `SessionAuthentication` gives 403 to a user who is not logged in, because it has no `WWW-Authenticate` value.
+  `apps/core/authentication.py::SessionAuthentication` adds this value, so the API gives 401 (§11.2).
 
 ### 4.2 CSRF
 
@@ -322,7 +329,8 @@ versions or the shares. If that person is logged in, the person can also duplica
 ### 4.6 HTTP headers
 
 - `SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")`. The reverse proxy must set this header.
-- In production: `SECURE_SSL_REDIRECT = True`, and `SECURE_HSTS_SECONDS` of 1 year.
+- In production: `SECURE_SSL_REDIRECT = True`, and `SECURE_HSTS_SECONDS` of 1 year. The same `https://` condition
+  as for the cookies applies (§4.1).
 - Content Security Policy, with `django-csp`:
   - `default-src 'self'`
   - `script-src 'self'`
@@ -417,10 +425,12 @@ fact.
 
 ### 5.4 Account delete
 
-`apps/accounts/services.py::delete_account(user_id)` does these steps in one transaction (AUTH-005):
+`apps/accounts/services.py::delete_account(user_id, *, authenticated_at)` does these steps in one transaction
+(AUTH-005):
 
 1. It makes sure that the user authenticated again in the last 5 minutes. If not, it raises
-   `ReauthenticationRequired` (HTTP 401).
+   `ReauthenticationRequired` (HTTP 401). `authenticated_at` is the time of the last login or reauthentication, or
+   `None`. The view reads it from the allauth data in the session, because a service never gets a request (§3.2).
 2. It enqueues a confirmation email to the address of the user (§8).
 3. It deletes the `User` row.
 
@@ -735,6 +745,91 @@ def get_diagram(diagram_id: UUID) -> DiagramRef: ...  # Raises DiagramNotFound.
 Add a function only when a caller exists. Example: the future `collab` app (§17.1) adds `get_content` and
 `save_content`.
 
+### 7.11 Request and response bodies
+
+These shapes are the contract between the SPA and the API. `lib/api/diagrams.js` (§12.5) and the serializers of
+`diagrams` must agree with them. All paths start with `/api/v1`.
+
+Objects:
+
+| Object | Fields |
+|--------|--------|
+| `UserSummary` | `id`, `email`, `display_name` |
+| `DiagramSummary` | `id`, `name`, `role` (the effective role of the caller), `change_number`, `updated_at`, `updated_by` (`UserSummary` or `null`), `trashed_at` (`null` if not in the trash) |
+| `Diagram` | All fields of `DiagramSummary`, and `workspace_id`, `source`, `layout`, `created_at` |
+| `VersionSummary` | `id`, `kind`, `label`, `change_number`, `created_at`, `created_by` (`UserSummary` or `null`) |
+| `Version` | All fields of `VersionSummary`, and `source`, `layout` |
+| `Share` | `id`, `email`, `role`, `created_at` |
+| `PublicLink` | `enabled` (boolean), `token`, `url`, `created_at`. If the link is off, `enabled` is `false` and the other fields are `null`. |
+| `PublicDiagram` | `name`, `source`, `layout`, `updated_at` |
+
+Each response that contains a `Diagram` also has the header `ETag: "<change_number>"`.
+
+Endpoints:
+
+| Method and path | Request body | Response |
+|-----------------|--------------|----------|
+| `GET /diagrams?scope=mine\|shared\|trash` | None | 200, a page (§11.4) of `DiagramSummary` |
+| `POST /diagrams` | `name`, and optional `source` and `layout` | 201, `Diagram` |
+| `GET /diagrams/<id>` | None | 200, `Diagram` |
+| `PATCH /diagrams/<id>` | One or more of `name`, `source`, and `layout`. Header `If-Match`. | 200, `Diagram` |
+| `DELETE /diagrams/<id>` | None | 204 |
+| `POST /diagrams/<id>/restore` | None | 200, `Diagram`. A diagram that is not in the trash comes back with no change. |
+| `DELETE /diagrams/<id>/permanent` | None | 204 |
+| `POST /diagrams/<id>/duplicate` | None | 201, `Diagram` |
+| `GET /diagrams/<id>/versions` | None | 200, a page of `VersionSummary` |
+| `POST /diagrams/<id>/versions` | `label` | 201, `VersionSummary` |
+| `GET /diagrams/<id>/versions/<vid>` | None | 200, `Version` |
+| `POST /diagrams/<id>/versions/<vid>/restore` | None. Header `If-Match`. | 200, `Diagram` |
+| `GET /diagrams/<id>/shares` | None | 200, `{"results": [Share], "next": null}` |
+| `POST /diagrams/<id>/shares` | `email`, `role` | 201, `Share` |
+| `PATCH /diagrams/<id>/shares/<sid>` | `role` | 200, `Share` |
+| `DELETE /diagrams/<id>/shares/<sid>` | None | 204 |
+| `GET /diagrams/<id>/public-link` | None | 200, `PublicLink` |
+| `PUT /diagrams/<id>/public-link` | None | 200, `PublicLink` |
+| `POST /diagrams/<id>/public-link/rotate` | None | 200, `PublicLink` |
+| `DELETE /diagrams/<id>/public-link` | None | 204 |
+| `GET /public/<token>` | None | 200, `PublicDiagram` |
+| `POST /public/<token>/duplicate` | None | 201, `Diagram` |
+| `DELETE /accounts/me` | None | 204. The session ends. |
+| `GET /csrf` | None | 204. Sets the `csrftoken` cookie. |
+
+Input rules:
+
+- `name`: the service removes the spaces at the start and the end. It must not be empty. It must have
+  `DIAGRAM_NAME_MAX_CHARS` or fewer characters.
+- `source`: a string. The default is `""`. The service keeps it exactly (DGM-003).
+- `layout`: the format in §7.2. The default is `{"format": 1, "tables": {}}`.
+- `label`: the same rules as `name`.
+- `email`: a correct email address. The service changes it to lowercase.
+- `role` of a share: `viewer` or `editor`.
+- `If-Match`: `"<n>"`, where `<n>` is the change number. The API also accepts `<n>` without quotes.
+- `page_size`: 1 to 100. The default is 50.
+
+Error codes (§11.3). The SPA uses only these codes in its logic:
+
+| Code | HTTP | Cause |
+|------|------|-------|
+| `validation_failed` | 400 | The input is not correct. `fields` gives a message for each field. |
+| `invalid_if_match` | 400 | `If-Match` is not a change number. |
+| `share_self` | 400 | The address is the address of the caller. |
+| `not_authenticated` | 401 | The user is not logged in. |
+| `reauthentication_required` | 401 | Account delete without a recent authentication (§5.4). |
+| `permission_denied` | 403 | The CSRF token is not correct, or a different permission check failed. |
+| `diagram_forbidden` | 403 | The role of the caller is too low for the action. |
+| `not_found` | 404 | The path does not exist. |
+| `diagram_not_found` | 404 | The diagram does not exist, the caller has no role, or the diagram is in the trash. |
+| `version_not_found`, `share_not_found` | 404 | The object does not exist on this diagram. |
+| `public_link_not_found` | 404 | The token is unknown, the link is off, or the diagram is in the trash. |
+| `diagram_not_in_trash` | 409 | A permanent delete of a diagram that is not in the trash. |
+| `share_exists` | 409 | The diagram has a share for this address. |
+| `share_limit` | 409 | The diagram has `DIAGRAM_MAX_SHARES` shares. |
+| `public_link_off` | 409 | A rotate when the link is off. |
+| `diagram_conflict` | 412 | The change number is old. The error object also has `current`: `{"change_number", "updated_by", "updated_at"}`. |
+| `source_too_large`, `layout_too_large` | 413 | The source or the layout is larger than the limit (DGM-005). |
+| `precondition_required` | 428 | `If-Match` is not in the request. |
+| `throttled` | 429 | Too many requests (SEC-005). |
+
 ---
 
 ## 8. comms: outbound email
@@ -807,6 +902,8 @@ helper, keep the helper in that app.
 | `pagination.py` | Cursor pagination (§11.4) |
 | `views.py` | `healthz`, `readyz`, and `csrf` |
 | `logging.py` | The JSON log format |
+| `authentication.py` | `SessionAuthentication`, which gives 401 and not 403 to a user who is not logged in (§4.1) |
+| `middleware.py` | `ReleaseHeaderMiddleware`, which adds `X-App-Release` to each response (§11.5) |
 
 Health views (OPS-001):
 
@@ -949,12 +1046,12 @@ frontend/src/
   features/
     auth/           Log in, sign up, verify email, reset password, account settings
     diagrams/       Diagram list, trash, and the dialogs to make, rename, and delete a diagram
-    editor/         Editor page: code pane, canvas, toolbar, autosave, conflict banner
+    editor/         Editor page and public view page: code pane, canvas, toolbar, autosave, conflict banner
       code/         CodeMirror wrapper and the DBML syntax mode
-      canvas/       React Flow wrapper: table nodes, ref edges, automatic layout
+      canvas/       React Flow wrapper: table nodes, ref edges, automatic layout, image export
       store.js      Editor store (Zustand)
     versions/       Version panel
-    shares/         Share dialog, public link controls, public view page
+    shares/         Share dialog and public link controls
     import-export/  Import dialog and export dialog
   lib/
     api/            The fetch client, and one module for each backend app
@@ -1042,6 +1139,46 @@ editor store --(source + layout, 1 s after the last change)--> autosave: PATCH w
 - All actions are possible with the keyboard. A dialog keeps the focus inside until it closes.
 - Each icon button has an `aria-label` from `src/text/en.js`.
 - The code pane gives the full diagram as text. For this reason, the canvas is not the only view of a diagram.
+
+### 12.10 Feature interfaces
+
+The features are in layers. A feature can import only the `index.js` of a feature below it. `app/` is above all
+features. A circular import between features is a defect.
+
+```
+app             Routes and app shell. It can import all features.
+editor          Uses versions, shares, import-export, and auth.
+diagrams        Uses import-export.
+versions, shares, import-export
+auth
+```
+
+The public view page (`/s/:token`) is in `editor`, because it is the editor in read-only mode (§12.6). For this
+reason, `shares` does not import `editor`. The export dialog gets the image export as a function in its props, so
+`import-export` does not import `editor`.
+
+Names that each `index.js` gives:
+
+| Feature | Name | Props or return value |
+|---------|------|-----------------------|
+| `auth` | `LoginPage`, `SignupPage`, `VerifyEmailPage`, `ResetPasswordRequestPage`, `ResetPasswordPage`, `SettingsPage` | Route pages. No props. |
+| `auth` | `RequireAuth` | `{ children }`. Shows `children` if a user is logged in. If not, it goes to `/login?next=<path>`. |
+| `auth` | `useSession()` | `{ user, isLoading }`. `user` is `{ id, email, display }`, or `null`. The query key is `["session"]`. |
+| `auth` | `useLogout()` | A function that logs out and then goes to `/login`. |
+| `diagrams` | `DiagramListPage`, `TrashPage` | Route pages. No props. |
+| `editor` | `EditorPage` | The route page for `/d/:diagramId`. |
+| `editor` | `PublicViewPage` | The route page for `/s/:token`. Read only. |
+| `versions` | `VersionPanel` | `{ diagramId, canEdit, getChangeNumber, onRestored, onClose }`. `getChangeNumber()` returns the change number that the editor read. `onRestored(diagram)` gets the `Diagram` and the `etag` after a restore. |
+| `shares` | `ShareDialog` | `{ diagramId, diagramName, onClose }`. It contains the shares and the public link controls. |
+| `import-export` | `ExportDialog` | `{ name, source, exportImage, onClose }`. `exportImage(format)` gets `"png"` or `"svg"` and returns a `Promise<Blob>`. |
+| `import-export` | `ImportDialog` | `{ onImported, onClose }`. `onImported(diagram)` gets the new `Diagram`. |
+
+Interfaces inside `editor`:
+
+| Module | Name | Props |
+|--------|------|-------|
+| `editor/code/CodePane.jsx` | `CodePane` | `{ value, onChange, errors, readOnly, label }`. `onChange(text)` gets the full source. `errors` is a list of `ParseError` (§13.2). |
+| `editor/canvas/Canvas.jsx` | `Canvas` | `{ parseResult, layout, onLayoutChange, readOnly }`. `onLayoutChange(layout)` gets the full new layout, after a move of a table or after an automatic position (EDT-004). A `ref` gives `arrange()`, `fitView()`, and `exportImage(format)`. |
 
 ---
 
@@ -1330,7 +1467,17 @@ Procedure:
 9. Open http://localhost:5173.
 
 Vite sends `/api`, `/_allauth`, `/admin`, and `/static` to Django on port 8000 (`server.proxy` in `vite.config.js`).
-For this reason, the browser sees one origin, as in production.
+For this reason, the browser sees one origin, as in production. Vite uses the base `/static/` only for the build. The
+dev server uses the base `/`.
+
+Notes on the services:
+
+- The `db` service listens on the host port 5433, not 5432. Then it does not collide with a different PostgreSQL
+  server on the host. The default `DATABASE_URL` of the `dev` and `test` settings uses this port.
+- `docker-compose.yml` sets `name: dbml-maker`. Then each git worktree uses the same Compose project and the same
+  containers.
+- The test database name comes from the name in `DATABASE_URL`, with the prefix `test_`. If two test runs occur at
+  the same time, give each run a different database name in `DATABASE_URL`.
 
 ### 16.2 Docker image
 
