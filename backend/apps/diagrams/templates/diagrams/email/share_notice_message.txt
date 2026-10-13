@@ -1,0 +1,12 @@
+{% autoescape off %}{{ sharer }} shared a diagram with you.
+
+Diagram: {{ diagram_name }}
+Your role: {{ role }}
+
+Open the diagram at this address:
+{{ url }}
+
+If you have no account, you can sign up with this email address ({{ email }}) at this address:
+{{ signup_url }}
+After you sign up, you can open the diagram.
+{% endautoescape %}
