@@ -1,0 +1,29 @@
+name: dbml-maker
+
+# A later task adds the services web, worker, and migrate (DESIGN.md section 16.1).
+services:
+  db:
+    image: postgres:18
+    environment:
+      POSTGRES_USER: dbml
+      POSTGRES_PASSWORD: dbml
+      POSTGRES_DB: dbml
+    ports:
+      - "127.0.0.1:5433:5432"
+    volumes:
+      # The PostgreSQL 18 image keeps its data below /var/lib/postgresql.
+      - db-data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U dbml -d dbml"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  mailpit:
+    image: axllent/mailpit:v1.27
+    ports:
+      - "127.0.0.1:1025:1025"
+      - "127.0.0.1:8025:8025"
+
+volumes:
+  db-data:

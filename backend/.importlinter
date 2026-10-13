@@ -1,0 +1,101 @@
+[importlinter]
+root_packages =
+    apps
+include_external_packages = False
+
+# DESIGN.md section 3.4, contract 1: an app calls only the apps below it.
+[importlinter:contract:layers]
+name = Apps follow the layers
+type = layers
+layers =
+    apps.diagrams
+    apps.workspaces
+    apps.accounts
+    apps.comms
+    apps.core
+
+# Contract 2: other apps must not import the private modules of an app. They use api.py.
+[importlinter:contract:diagrams-private]
+name = Other apps do not import the private modules of diagrams
+type = forbidden
+source_modules =
+    apps.core
+    apps.comms
+    apps.accounts
+    apps.workspaces
+forbidden_modules =
+    apps.diagrams.models
+    apps.diagrams.services
+    apps.diagrams.selectors
+    apps.diagrams.policy
+    apps.diagrams.serializers
+    apps.diagrams.views
+    apps.diagrams.tasks
+    apps.diagrams.errors
+    apps.diagrams.tests
+
+[importlinter:contract:workspaces-private]
+name = Other apps do not import the private modules of workspaces
+type = forbidden
+source_modules =
+    apps.core
+    apps.comms
+    apps.accounts
+    apps.diagrams
+forbidden_modules =
+    apps.workspaces.models
+    apps.workspaces.services
+    apps.workspaces.selectors
+    apps.workspaces.serializers
+    apps.workspaces.views
+    apps.workspaces.tasks
+    apps.workspaces.errors
+    apps.workspaces.tests
+
+[importlinter:contract:accounts-private]
+name = Other apps do not import the private modules of accounts
+type = forbidden
+source_modules =
+    apps.core
+    apps.comms
+    apps.workspaces
+    apps.diagrams
+forbidden_modules =
+    apps.accounts.models
+    apps.accounts.services
+    apps.accounts.selectors
+    apps.accounts.serializers
+    apps.accounts.views
+    apps.accounts.tasks
+    apps.accounts.errors
+    apps.accounts.tests
+
+[importlinter:contract:comms-private]
+name = Other apps do not import the private modules of comms
+type = forbidden
+source_modules =
+    apps.core
+    apps.accounts
+    apps.workspaces
+    apps.diagrams
+forbidden_modules =
+    apps.comms.models
+    apps.comms.services
+    apps.comms.selectors
+    apps.comms.serializers
+    apps.comms.views
+    apps.comms.tasks
+    apps.comms.errors
+    apps.comms.tests
+
+# Contract 3: the shared kernel imports no other app.
+[importlinter:contract:core-independent]
+name = Core imports no other app
+type = forbidden
+source_modules =
+    apps.core
+forbidden_modules =
+    apps.comms
+    apps.accounts
+    apps.workspaces
+    apps.diagrams

@@ -896,7 +896,7 @@ helper, keep the helper in that app.
 | Module | Contents |
 |--------|----------|
 | `models.py` | `BaseModel` (abstract): `id = UUIDField(primary_key=True, default=uuid.uuid7, editable=False)` and `created_at` |
-| `errors.py` | `DomainError` and its general subclasses: `NotFound`, `Forbidden`, `Conflict`, `ValidationFailed`, `PreconditionFailed`, `PreconditionRequired` |
+| `errors.py` | `DomainError` and its general subclasses: `NotFound`, `Forbidden`, `Conflict`, `ValidationFailed`, `PreconditionFailed`, `PreconditionRequired`, `PayloadTooLarge` |
 | `exceptions.py` | `api_exception_handler` for DRF (§11.3) |
 | `jobs.py` | The Procrastinate app. It is the only module that imports `procrastinate` directly (§10). |
 | `pagination.py` | Cursor pagination (§11.4) |
@@ -1178,7 +1178,7 @@ Interfaces inside `editor`:
 | Module | Name | Props |
 |--------|------|-------|
 | `editor/code/CodePane.jsx` | `CodePane` | `{ value, onChange, errors, readOnly, label }`. `onChange(text)` gets the full source. `errors` is a list of `ParseError` (§13.2). |
-| `editor/canvas/Canvas.jsx` | `Canvas` | `{ parseResult, layout, onLayoutChange, readOnly }`. `onLayoutChange(layout)` gets the full new layout, after a move of a table or after an automatic position (EDT-004). A `ref` gives `arrange()`, `fitView()`, and `exportImage(format)`. |
+| `editor/canvas/Canvas.jsx` | `Canvas` | `{ parseResult, layout, onLayoutChange, readOnly, viewportKey }`. `onLayoutChange(layout)` gets the full new layout, after a move of a table or after an automatic position (EDT-004). `viewportKey` is the `localStorage` key for the pan and the zoom (§7.2), or `null`. A `ref` gives `arrange()`, `fitView()`, and `exportImage(format)`. |
 
 ---
 
