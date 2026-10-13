@@ -1,60 +1,119 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+This file gives guidance to Claude Code (claude.ai/code) for work in this repository.
+
+## Language: ASD-STE100
+
+Write all text in ASD-STE100 Simplified Technical English. This rule applies to:
+
+- your replies to the user,
+- documents, code comments, and docstrings,
+- commit messages and pull request text,
+- UI text, error messages, and log messages.
+
+The rules are in `AGENTS.md`, section "Text rules (ASD-STE100)". If a file that you change contains text that does
+not obey these rules, correct that text.
+
+## Agent orchestration
+
+Opus 5.5 (the main session) plans, designs, and orchestrates the development. Sonnet 5.5 agents write the code.
+
+1. Opus 5.5 divides the work into tasks. Each task has one owner app or one frontend feature.
+2. For each task, Opus 5.5 writes a specification. The specification gives:
+   - the owner app or the frontend feature,
+   - the `DESIGN.md` sections to read,
+   - the requirement IDs,
+   - the files to change,
+   - the gates to run.
+3. A Sonnet 5.5 agent writes the code for the task. Start the agent with the Agent tool and `model: "sonnet"`. Code
+   includes source, tests, migrations, configuration, and scripts.
+4. Two agents must not change the same files. If agents run in parallel, give each agent `isolation: "worktree"`.
+5. Opus 5.5 examines each result against `DESIGN.md` and the CI gates. It tells the user that the work is complete
+   only after this examination.
+6. If a task changes a boundary, Opus 5.5 changes `DESIGN.md` in the same change.
+
+Opus 5.5 writes the design documents (`CLAUDE.md`, `AGENTS.md`, and `DESIGN.md`), because they are design work.
 
 ## Project status
 
-This is a newly scaffolded project, and there is no source code yet. So far the repo holds only `pyproject.toml` (with no dependencies) and `.gitignore`. There is no README, no test suite, and no lint or format config. Update this file once those are added.
+The repository contains documents only. There is no source code yet.
 
-## Tooling
+- `AGENTS.md` gives the overview. `DESIGN.md` gives the target design.
+- The root `pyproject.toml` is a placeholder. The first backend change moves it to `backend/pyproject.toml`. Then uv
+  makes the environment in `backend/.venv`.
+- There is no README, no test suite, and no lint configuration yet.
 
-- Python packaging and environments are managed with **uv** (the PyCharm interpreter is "uv (dbml-maker)", and `.venv` was created by uv). The project needs Python **>= 3.14**.
-- `pyproject.toml` has no `[build-system]` table, so uv treats this as a non-packaged project: `uv sync` installs the dependencies but not the project itself. To make the code importable as an installed package or to expose CLI entry points, first add a build backend (for example, `hatchling`) and a `[project.scripts]` table.
+When the code starts to exist, change this section. If the code and `DESIGN.md` do not agree, correct one of them in
+the same change.
+
+## Tools
+
+- **Backend.** uv manages the Python packages and the environments. The project uses Python 3.14 or later. The
+  PyCharm interpreter is "uv (dbml-maker)".
+- The backend is not a package. Keep `backend/pyproject.toml` without a `[build-system]` table. Then `uv sync`
+  installs only the dependencies. Django finds the apps through `manage.py` in `backend/`. pytest finds them through
+  `pythonpath = ["."]`.
+- **Frontend.** npm manages the packages. Use Node 24 LTS.
+- **Services.** Docker Compose runs PostgreSQL 18 and Mailpit for local work (`DESIGN.md` §16.1).
+- Commit `uv.lock` and `package-lock.json`. Git ignores `.venv`, `.idea`, `.env`, and `__pycache__`. When the
+  frontend exists, add `node_modules/` and `frontend/dist/` to `.gitignore`.
 
 ## Commands
 
 ```sh
-uv sync                    # create or update .venv from pyproject.toml / uv.lock
-uv add <pkg>               # add a runtime dependency (updates pyproject.toml and uv.lock)
-uv add --dev <pkg>         # add a dev-only dependency (e.g. pytest, ruff)
-uv run python <script.py>  # run inside the project venv
+# Services
+docker compose up -d db mailpit                 # Start PostgreSQL 18 and Mailpit.
+
+# Backend: run from backend/
+uv sync                                         # Make or change .venv from pyproject.toml and uv.lock.
+uv add <pkg>                                    # Add a runtime dependency.
+uv add --dev <pkg>                              # Add a dev dependency, for example pytest or ruff.
+uv run python manage.py migrate                 # Apply the migrations.
+uv run python manage.py runserver               # Start Django on port 8000.
+uv run python manage.py procrastinate worker    # Start the job worker.
+uv run pytest                                   # Run the backend tests.
+
+# Frontend: run from frontend/
+npm ci                                          # Install the packages from package-lock.json.
+npm run dev                                     # Start Vite on port 5173, with a proxy to Django.
+npm run test -- --run                           # Run Vitest one time.
 ```
 
-Commit `uv.lock` once it exists. `.venv`, `.idea`, `.env`, and `__pycache__` are gitignored.
+The full list of CI gates is in `AGENTS.md`, section "Work in the repository". Run all the gates before you say that
+the work is complete.
 
+## Architecture rules
 
-Claude Project Rules
+Build the backend as a Django modular monolith with clear domain boundaries. Each domain has its own Django app
+(`DESIGN.md` §3). Keep the features independent. Then you can add new apps later without a tight connection to the
+current apps.
 
+For each feature, obey these rules:
 
-Build this Django application as a modular monolith with clear domain boundaries.
+1. Give the feature one owner app.
+2. Keep views and serializers thin. Put the business workflows in services.
+3. Do not use the internal code of a different app. Use only its public interface (`api.py`).
+4. Give each interaction between apps an explicit function in `api.py`.
+5. Do not make circular dependencies between apps.
+6. Write direct and clear code. Do not add an abstraction that no current feature uses.
+7. Do not use Django signals for business logic or for calls between apps. If a side effect is fully independent,
+   enqueue a job from the service (`DESIGN.md` §10).
+8. Put infrastructure behind a replaceable boundary. This includes WebSockets, email, notifications, file storage,
+   the job queue, and external APIs.
+9. Make each app testable alone.
 
-Keep features decoupled and organize code by domain so new modules can be added later without tightly coupling them to
-existing ones.
+Before you start a large feature, write these three items:
 
-For each feature:
+1. The owner app.
+2. The apps that it depends on.
+3. How these apps communicate.
 
-* Give it a clear owning Django app/module.
-* Keep views and serializers thin; put business workflows in services.
-* Avoid cross-app access to internal implementation details.
-* Expose explicit public interfaces for interactions between modules.
-* Avoid circular dependencies.
-* Prefer direct, understandable code over unnecessary abstractions.
-* Use events/signals only for genuinely decoupled side effects, not core business logic.
-* Keep infrastructure such as WebSockets, notifications, storage, and external APIs behind replaceable boundaries.
-* Make modules independently testable.
+Design for features that will come later. Example: real-time edit (`DESIGN.md` §17.1) will be a new `collab` app. It
+must connect to diagrams through `apps/diagrams/api.py`. It must not cause a change to the tables of `diagrams`, and it
+must not use the internal code of `diagrams`.
 
-Before implementing a significant feature, briefly state:
-
-1. Which module owns it.
-2. What modules it depends on.
-3. How those modules communicate.
-
-Design with future features in mind. For example, adding chat later should not require restructuring the tables/records
-system, and chat should be able to integrate with records through a defined boundary rather than depending on their
-internals.
-
-Optimize for maintainability, developer onboarding, and multiple developers working on separate features—not maximum
-abstraction.
+Make the code easy to maintain and easy for a new developer to learn. Let many developers work on different features
+at the same time. These goals are more important than maximum abstraction.
 
 ## Project overview
 
@@ -62,9 +121,26 @@ abstraction.
 
 ## Design reference: read the section, not the file
 
-`DESIGN.md` is the full architecture reference. It is too large to load every time, so before you work in an
-area, read **only** the sections listed for it below. Section numbers are stable. If your change alters a
-boundary, a public interface, a state machine, a role, or a deploy step, update the matching section in the same
+`DESIGN.md` is the full architecture reference. It is too large to load each time. Before you work in an area, read
+**only** the sections that this table gives. The section numbers are stable. Your change can affect a boundary, a
+public interface, a state machine, a role, or a deploy step. If it does, change the applicable section in the same
 change.
 
-Always in ASD-STE100 
+| Task | Read |
+|------|------|
+| Add an app. Change a public interface or an import rule. | §3 |
+| Login, sign-up, sessions, CSRF, roles, permission checks | §4, §5 |
+| Workspaces and members | §6 |
+| Diagram save, versions, shares, public links, trash | §4.3, §7 |
+| Email | §8 |
+| Shared helpers in `core` | §9 |
+| Background jobs | §10 |
+| A new endpoint | §11, and the section of the owner app |
+| A frontend page or feature | §12 |
+| The code editor, the parser, the canvas, import, or export | §12.6, §12.7, §13 |
+| Models and migrations | §14 |
+| Tests | §15 |
+| CI, Docker, deploy, or release | §16 |
+| Plan a new module (real-time edit, comments, teams, tokens) | §3.8, §17 |
+| Code that does not agree with the design | §18 |
+| Terms and requirement IDs | §19 |
