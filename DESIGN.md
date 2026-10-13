@@ -199,6 +199,9 @@ core
    `selectors`, `policy`, `serializers`, `views`, `tasks`, and `errors`.
 3. A `forbidden` contract for `apps.core`. It must not import any other app.
 
+The contracts of item 2 examine only direct imports (`allow_indirect_imports = True`). An `api.py` imports the
+private modules of its own app. Without this option, each call through `api.py` would break the contract.
+
 A ForeignKey to a model in a lower app is permitted. Use the string form (`settings.AUTH_USER_MODEL`,
 `"workspaces.Workspace"`), so that the import rules stay true. But a query must not go across the relation into the
 tables of a different app. Call the `api.py` of that app.

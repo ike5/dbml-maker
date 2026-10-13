@@ -7,10 +7,10 @@ import pytest
 from django.contrib.auth import get_user_model
 from django.db import IntegrityError, transaction
 
+from apps.accounts.testing import make_user
 from apps.workspaces import api, services
 from apps.workspaces.models import Member, Workspace
 from apps.workspaces.testing import add_member, make_team_workspace
-from apps.workspaces.tests.helpers import make_user
 
 pytestmark = pytest.mark.django_db
 

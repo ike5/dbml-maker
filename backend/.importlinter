@@ -18,6 +18,8 @@ layers =
 [importlinter:contract:diagrams-private]
 name = Other apps do not import the private modules of diagrams
 type = forbidden
+# The api.py of an app imports its own private modules. Only direct imports are an error.
+allow_indirect_imports = True
 source_modules =
     apps.core
     apps.comms
@@ -37,6 +39,8 @@ forbidden_modules =
 [importlinter:contract:workspaces-private]
 name = Other apps do not import the private modules of workspaces
 type = forbidden
+# The api.py of an app imports its own private modules. Only direct imports are an error.
+allow_indirect_imports = True
 source_modules =
     apps.core
     apps.comms
@@ -55,6 +59,8 @@ forbidden_modules =
 [importlinter:contract:accounts-private]
 name = Other apps do not import the private modules of accounts
 type = forbidden
+# The api.py of an app imports its own private modules. Only direct imports are an error.
+allow_indirect_imports = True
 source_modules =
     apps.core
     apps.comms
@@ -73,6 +79,8 @@ forbidden_modules =
 [importlinter:contract:comms-private]
 name = Other apps do not import the private modules of comms
 type = forbidden
+# The api.py of an app imports its own private modules. Only direct imports are an error.
+allow_indirect_imports = True
 source_modules =
     apps.core
     apps.accounts

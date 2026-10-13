@@ -2,8 +2,8 @@
 
 import pytest
 
+from apps.accounts.testing import make_user
 from apps.workspaces import api
-from apps.workspaces.tests.helpers import make_user
 
 pytestmark = pytest.mark.django_db
 
