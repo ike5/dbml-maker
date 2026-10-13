@@ -1,7 +1,10 @@
 name: dbml-maker
 
+# This file is for local work and for a trial. Do not use this file on a server.
+# It has a fixed secret key and no TLS. For a server, use docker-compose.selfhost.yml.
+
 # The app services (migrate, web, worker) use one image (DESIGN.md sections 16.1 and 16.2).
-# "docker compose up -d db mailpit" starts only the two services that the developer needs.
+# "docker compose up -d db mailpit" starts only the two services that the developer uses.
 x-app: &app
   build:
     context: .
@@ -25,7 +28,7 @@ services:
       POSTGRES_PASSWORD: dbml
       POSTGRES_DB: dbml
     ports:
-      - "127.0.0.1:5433:5432"
+      - "127.0.0.1:${DB_PORT:-5433}:5432"
     volumes:
       # The PostgreSQL 18 image keeps its data below /var/lib/postgresql.
       - db-data:/var/lib/postgresql
@@ -38,8 +41,8 @@ services:
   mailpit:
     image: axllent/mailpit:v1.27
     ports:
-      - "127.0.0.1:1025:1025"
-      - "127.0.0.1:8025:8025"
+      - "127.0.0.1:${MAILPIT_SMTP_PORT:-1025}:1025"
+      - "127.0.0.1:${MAILPIT_WEB_PORT:-8025}:8025"
 
   migrate:
     <<: *app

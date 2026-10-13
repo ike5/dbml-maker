@@ -14,3 +14,4 @@ frontend/test-results
 **/.ruff_cache
 backend/staticfiles
 .env
+*.dump

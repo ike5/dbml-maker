@@ -1,0 +1,104 @@
+# This file runs DBML Maker on a server (DESIGN.md section 16).
+# It starts PostgreSQL 18, a one-time migration, the web process, and the worker.
+#
+# Before you start, copy .env.example to .env. Then set the necessary values in the .env file.
+# Start the stack with this command:
+#
+#   docker compose -f docker-compose.selfhost.yml up -d --build --wait
+#
+# The web process listens on 127.0.0.1 only. Put a reverse proxy with TLS in front of it.
+# The proxy must send the header X-Forwarded-Proto.
+# The name below is different from the name in docker-compose.yml. For this reason, this stack has its own volume.
+name: dbml-maker-selfhost
+
+# The app services (migrate, web, worker) use one image.
+# If the image is not on the host, Docker Compose tries to pull it. If the pull fails, Compose builds the image.
+# The flag --build always builds the image from the source.
+x-app: &app
+  build:
+    context: .
+    args:
+      APP_RELEASE: ${DBML_MAKER_VERSION:-selfhost}
+  image: ghcr.io/ike5/dbml-maker:${DBML_MAKER_VERSION:-latest}
+  environment:
+    DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY:?Set DJANGO_SECRET_KEY in the .env file. See .env.example.}
+    DATABASE_URL: postgres://dbml:${POSTGRES_PASSWORD}@db:5432/dbml
+    PUBLIC_BASE_URL: ${PUBLIC_BASE_URL:?Set PUBLIC_BASE_URL in the .env file. See .env.example.}
+    # Sign-up and the first login use a verification email. Without an SMTP server nobody can log in.
+    # For this reason, EMAIL_HOST is necessary.
+    EMAIL_HOST: ${EMAIL_HOST:?Set EMAIL_HOST in the .env file. See .env.example.}
+    # The settings read an empty value of these variables as a real value, so each one has a default.
+    EMAIL_PORT: ${EMAIL_PORT:-25}
+    WEB_CONCURRENCY: ${WEB_CONCURRENCY:-2}
+    LOG_LEVEL: ${LOG_LEVEL:-INFO}
+    # The settings read an empty value of these variables as "use the default".
+    EMAIL_HOST_USER: ${EMAIL_HOST_USER:-}
+    EMAIL_HOST_PASSWORD: ${EMAIL_HOST_PASSWORD:-}
+    EMAIL_USE_TLS: ${EMAIL_USE_TLS:-}
+    DEFAULT_FROM_EMAIL: ${DEFAULT_FROM_EMAIL:-}
+    SIGNUP_ENABLED: ${SIGNUP_ENABLED:-}
+
+services:
+  # The database has no host port. Only the services of this stack can reach it.
+  db:
+    image: postgres:18
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: dbml
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in the .env file. See .env.example.}
+      POSTGRES_DB: dbml
+    volumes:
+      # The PostgreSQL 18 image keeps its data below /var/lib/postgresql.
+      - db-data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U dbml -d dbml"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  # The migrate service applies the migrations and then exits. The web and worker services wait for it.
+  migrate:
+    <<: *app
+    command: sh -c "python manage.py migrate --noinput && python manage.py createcachetable"
+    restart: "no"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  web:
+    <<: *app
+    restart: unless-stopped
+    # The default is the loopback address, because a reverse proxy with TLS runs in front of the stack.
+    ports:
+      - "${WEB_BIND:-127.0.0.1}:${WEB_PORT:-8000}:8000"
+    healthcheck:
+      # The slim image has no curl.
+      # Django accepts only the host of PUBLIC_BASE_URL. If the URL uses HTTPS, Django redirects each plain HTTP
+      # request. For this reason, the healthcheck sends the public host and the header X-Forwarded-Proto.
+      # The reverse proxy sends the same values.
+      test:
+        - CMD
+        - python
+        - -c
+        - |
+          import os, urllib.parse, urllib.request
+          host = urllib.parse.urlparse(os.environ["PUBLIC_BASE_URL"]).netloc
+          headers = {"Host": host, "X-Forwarded-Proto": "https"}
+          urllib.request.urlopen(urllib.request.Request("http://127.0.0.1:8000/healthz", headers=headers), timeout=3)
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+
+  worker:
+    <<: *app
+    restart: unless-stopped
+    command: python manage.py procrastinate worker
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+
+volumes:
+  db-data:

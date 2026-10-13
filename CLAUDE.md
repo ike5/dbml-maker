@@ -88,7 +88,7 @@ npx playwright test                             # Run the end-to-end tests again
 ```
 
 The full list of CI gates is in `AGENTS.md`, section "Work in the repository". Run all the gates before you say that
-the work is complete.
+the work is complete. The setup steps for a human developer are in `CONTRIBUTING.md`.
 
 ## Architecture rules
 

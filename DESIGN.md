@@ -1498,6 +1498,10 @@ Notes on the services:
   containers.
 - The test database name comes from the name in `DATABASE_URL`, with the prefix `test_`. If two test runs occur at
   the same time, give each run a different database name in `DATABASE_URL`.
+- To start the full stack, run `docker compose up -d --build --wait`. The application is at http://localhost:8000.
+  `docker-compose.yml` is for local work and for a trial only. It has a fixed secret key and no TLS.
+- If a host port is busy, set `DB_PORT`, `MAILPIT_SMTP_PORT`, or `MAILPIT_WEB_PORT`. If you change `DB_PORT`, also set
+  `DATABASE_URL`.
 
 ### 16.2 Docker image
 
@@ -1509,6 +1513,19 @@ The `Dockerfile` has two stages:
 
 The image runs as a non-root user. The default command starts gunicorn. The `worker` service uses the same image with
 the command `python manage.py procrastinate worker`.
+
+The file `docker-compose.selfhost.yml` runs the image on a server. It is different from `docker-compose.yml` in these
+points:
+
+- It has its own project name (`dbml-maker-selfhost`) and its own volume.
+- It has no Mailpit and no host port for `db`.
+- It reads the secrets from the `.env` file. `.env.example` is the template. If `DJANGO_SECRET_KEY`,
+  `POSTGRES_PASSWORD`, `PUBLIC_BASE_URL`, or `EMAIL_HOST` is empty, Docker Compose stops with a message.
+- It binds `web` to `127.0.0.1` (`WEB_BIND`), because a reverse proxy with TLS runs in front of it.
+- The healthcheck of `web` sends the public host and the header `X-Forwarded-Proto`. Django accepts only the public
+  host, and it redirects plain HTTP when `PUBLIC_BASE_URL` uses HTTPS.
+- It sets `restart: unless-stopped` for `db`, `web`, and `worker`.
+- It sets `image` and `build`. If the image is not on the host and the pull fails, Docker Compose builds the image.
 
 ### 16.3 How Django serves the SPA
 
@@ -1532,6 +1549,10 @@ the command `python manage.py procrastinate worker`.
 | `LOG_LEVEL` | The log level | `INFO` |
 | `APP_RELEASE` | The release string for `X-App-Release` (§11.5). The build sets it. | `dev` |
 
+`docker-compose.selfhost.yml` also reads `POSTGRES_PASSWORD`, `WEB_BIND`, `WEB_PORT`, and `DBML_MAKER_VERSION` from
+`.env`. It builds `DATABASE_URL` from `POSTGRES_PASSWORD`. In this file, `EMAIL_HOST` is necessary, because each login
+uses a verification email (§5).
+
 ### 16.5 Deploy procedure
 
 1. CI builds the image and pushes it to GHCR.
@@ -1543,6 +1564,9 @@ the command `python manage.py procrastinate worker`.
 
 To roll back, deploy the previous image tag. Do not reverse the migrations, because they are backward compatible
 (§14.3).
+
+An operator who uses `docker-compose.selfhost.yml` runs `git pull`, then
+`docker compose -f docker-compose.selfhost.yml up -d --build --wait`. The `migrate` service does steps 2 and 3.
 
 ### 16.6 CI
 
@@ -1558,8 +1582,10 @@ To roll back, deploy the previous image tag. Do not reverse the migrations, beca
 
 - Branch flow: `feat/*`, `fix/*`, or `chore/*`, then a pull request to `staging`, then a pull request to `main`.
 - A merge to `staging` deploys the staging environment, if the operator configured one.
-- A tag `vX.Y.Z` on `main` starts `release.yml`. It builds the image and pushes `ghcr.io/<owner>/dbml-maker:X.Y.Z`
+- A tag `vX.Y.Z` on `main` starts `release.yml`. It builds the image and pushes `ghcr.io/ike5/dbml-maker:X.Y.Z`
   and `:latest`. It also makes a GitHub Release.
+- After the first release, set the visibility of the GHCR package to Public in the GitHub settings. A package that
+  `GITHUB_TOKEN` pushes is private at first. Other people cannot pull a private package.
 - Release numbers follow SemVer (`MAJOR.MINOR.PATCH`). If an operator must do an action for a release, increase the
   minor number. Write the action in the release notes.
 - Write the release notes in ASD-STE100.
@@ -1660,6 +1686,10 @@ Each of these is a decision, not an error.
 - **Two tabs of one user also conflict.** This is correct, but a user can see it as a defect. The conflict banner
   tells the user what occurred.
 - **`createcachetable` must run on each deploy.** Without the table, the rate limits fail with HTTP 500.
+- **A user with no `EmailAddress` row cannot log in to the SPA before the first email verification.**
+  `createsuperuser` and the Django admin make no verified `EmailAddress` row, and `ACCOUNT_EMAIL_VERIFICATION` is
+  `mandatory`. The first login sends a verification email. The Django admin login has no such step. If the system has no
+  SMTP server, the operator marks the address as verified in a Django shell (see `README.md`, "Troubleshooting").
 - **DRF examines CSRF only for logged-in users.** If you add an anonymous `POST`, `PUT`, `PATCH`, or `DELETE`
   endpoint, add `csrf_protect` to it.
 - **The backend does not parse DBML.** A diagram can contain DBML with errors. The editor shows the errors.
