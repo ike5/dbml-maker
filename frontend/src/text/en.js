@@ -210,10 +210,62 @@ export const text = {
   },
 
   // Owner: versions (src/features/versions/)
-  versions: {},
+  versions: {
+    title: "Versions",
+    kindAuto: "Automatic version",
+    kindNamed: "Named version",
+    kindRestore: "Restored version",
+    unknownPerson: "Unknown person",
+    changeNumber: "Change number {number}",
+    byPerson: "by {person}",
+    loadMore: "Load more",
+    empty: "This diagram has no versions.",
+    makeHeading: "Make a named version",
+    labelLabel: "Label",
+    labelEmpty: "Type a label.",
+    labelTooLong: "The label must have 200 characters or fewer.",
+    make: "Make version",
+    made: "The system made the named version.",
+    show: "Show",
+    showTitle: "Source of the version",
+    showFor: "Show the version {name}",
+    restore: "Restore",
+    restoreFor: "Restore the version {name}",
+    restoreTitle: "Restore the version",
+    restoreBody:
+      "The current content of the diagram changes to the content of this version. The system keeps all versions.",
+    restoreConflict:
+      "The diagram changed after the editor loaded it. Load the new content, then try again.",
+  },
 
   // Owner: shares (src/features/shares/)
-  shares: {},
+  shares: {
+    title: "Share {name}",
+    peopleHeading: "People",
+    roleHint: "A viewer can read and export the diagram. An editor can also change the diagram.",
+    emailLabel: "Email address",
+    roleLabel: "Role",
+    roleViewer: "Viewer",
+    roleEditor: "Editor",
+    shareAction: "Share",
+    roleOf: "Role of {email}",
+    remove: "Remove the share of {email}",
+    noShares: "The diagram has no shares.",
+    sent: "The system sent an email to {email}. If the person has no account, the person can sign up with this address.",
+    linkHeading: "Public link",
+    linkOffText:
+      "The public link is off. A person with the link can see the diagram. The person cannot change it.",
+    linkTurnOn: "Turn on the public link",
+    linkLabel: "Public link",
+    linkCopy: "Copy",
+    linkCopied: "Copied",
+    linkCopyFailed: "The browser did not copy the link. Copy the selected text.",
+    linkRotate: "Make a new link",
+    linkRotateWarning:
+      "The old link stops immediately. Each person who has the old link loses access.",
+    linkRotateConfirm: "Make a new link now",
+    linkTurnOff: "Turn off",
+  },
 
   // Owner: import-export (src/features/import-export/)
   importExport: {},

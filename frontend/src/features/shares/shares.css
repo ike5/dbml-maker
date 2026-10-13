@@ -1,0 +1,55 @@
+.share-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin-bottom: var(--space-5);
+}
+.share-section h3 {
+  margin: 0;
+  font-size: var(--font-size-lg);
+}
+.share-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+.share-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+}
+.share-row + .share-row {
+  border-top: 1px solid var(--border);
+}
+.share-email {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.share-form {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+.share-form .field:first-child {
+  flex: 1;
+  min-width: 12rem;
+}
+.share-form button {
+  margin-top: calc(var(--font-size) * 1.5 + var(--space-2));
+}
+.share-actions {
+  display: flex;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+  align-items: center;
+}
+.share-muted {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: var(--font-size-sm);
+}

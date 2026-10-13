@@ -1,1 +1,1 @@
-export { ShareDialog } from "./stubs.jsx";
+export { ShareDialog } from "./ShareDialog.jsx";

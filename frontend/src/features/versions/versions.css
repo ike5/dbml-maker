@@ -1,0 +1,77 @@
+/* The parent of the panel must give it a height. The list scrolls inside the panel. */
+.version-panel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  background: var(--surface);
+  border-left: 1px solid var(--border);
+}
+.version-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 1px solid var(--border);
+}
+.version-panel-header h2 {
+  margin: 0;
+  font-size: var(--font-size-lg);
+}
+.version-panel-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: var(--space-3) var(--space-4);
+}
+.version-make {
+  margin-bottom: var(--space-4);
+}
+.version-make h3 {
+  margin: 0 0 var(--space-2);
+  font-size: var(--font-size-md);
+}
+.version-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.version-item {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: var(--space-3) 0;
+}
+.version-item + .version-item {
+  border-top: 1px solid var(--border);
+}
+.version-kind {
+  font-weight: 500;
+}
+.version-label {
+  overflow-wrap: anywhere;
+}
+.version-meta {
+  color: var(--text-muted);
+  font-size: var(--font-size-sm);
+}
+.version-actions {
+  display: flex;
+  gap: var(--space-2);
+}
+.version-more {
+  display: flex;
+  justify-content: center;
+  margin-top: var(--space-3);
+}
+.version-source {
+  max-height: 50vh;
+  overflow: auto;
+  margin: 0;
+  padding: var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  font-family: var(--font-mono, monospace);
+  font-size: var(--font-size-sm);
+  white-space: pre;
+}

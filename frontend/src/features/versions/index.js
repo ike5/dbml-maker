@@ -1,1 +1,1 @@
-export { VersionPanel } from "./stubs.jsx";
+export { VersionPanel } from "./VersionPanel.jsx";
