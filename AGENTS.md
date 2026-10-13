@@ -194,6 +194,8 @@ Text hygiene:
 |----------------|-------|
 | The `DESIGN.md` section for a task | `CLAUDE.md`, section "Design reference" |
 | Architecture details | [`DESIGN.md`](DESIGN.md) |
+| Setup for a developer, and how to send a change | [`CONTRIBUTING.md`](CONTRIBUTING.md) |
+| How to run the application on a server | [`README.md`](README.md) |
 | Terms and requirement IDs | `DESIGN.md` §19 |
 | The DBML language | https://dbml.dbdiagram.io/docs |
 | The source of `@dbml/core` | https://github.com/holistics/dbml |

@@ -13,3 +13,4 @@ htmlcov/
 frontend/test-results/
 frontend/playwright-report/
 .claude/worktrees/
+*.dump
