@@ -1073,7 +1073,7 @@ frontend/src/
 
 - A feature gives its public parts in `features/<name>/index.js`. Other features import only from that file.
 - `ui/` and `lib/` do not import from `features/`.
-- Only `lib/dbml/` imports `@dbml/core`.
+- Only `lib/dbml/` imports `@dbml/core` and `@dbml/parse`.
 - Only `features/editor/canvas/` imports `@xyflow/react`.
 - Only `features/editor/code/` imports CodeMirror packages.
 - Only `lib/api/` calls `fetch`.
@@ -1112,7 +1112,7 @@ canvas: the user moves a table --> editor store: layout
 editor store --(source + layout, 1 s after the last change)--> autosave: PATCH with If-Match --> API
 ```
 
-- **Parse.** The parser runs in a Web Worker (`lib/dbml/worker.js`). The UI thread never runs the parser (EDT-001). If
+- **Parse.** The parser runs in a Web Worker (the parse worker of `lib/dbml/`, §13.2). The UI thread never runs the parser (EDT-001). If
   the source has errors, the canvas keeps the last correct parse result. The code pane shows each error at its line
   and column (EDT-002).
 - **Autosave (EDT-003).** The editor saves 1 second after the last change. It also saves when the page becomes hidden
@@ -1204,10 +1204,21 @@ The frontend parses DBML with `@dbml/core`. The backend keeps the source as text
 Cost: the server cannot validate DBML, find tables in a source, or export without a browser. §17.5 gives the boundary
 for a later server-side renderer.
 
+**Two workers.** `lib/dbml/` has two Web Workers:
+
+- The parse worker uses `@dbml/parse`, the DBML compiler that `@dbml/core` also uses for DBML. It is small, so the
+  editor can show the first diagram quickly. The editor starts it.
+- The SQL worker uses `@dbml/core` for `exportSql` and `importSql`. `@dbml/core` contains the grammars of all SQL
+  dialects, and its bundle is approximately 15 MB. `lib/dbml/` starts this worker only at the first call of
+  `exportSql` or `importSql`.
+
+The two workers use the same DBML compiler, so they agree about a source.
+
 ### 13.2 Interface of lib/dbml
 
 ```js
-// All functions run in the parser worker and return a Promise.
+// All functions run in a Web Worker and return a Promise. parse uses the parse worker. exportSql and importSql use
+// the SQL worker (§13.1).
 parse(source)              // -> { result: ParseResult | null, errors: ParseError[] }
 exportSql(source, dialect) // dialect: "postgres" | "mysql" | "mssql" | "oracle". Returns SQL text.
 importSql(sql, dialect)    // dialect: "postgres" | "mysql" | "mssql". Returns DBML source.
@@ -1245,7 +1256,8 @@ output, change only `lib/dbml/`.
 
 ### 13.4 Procedure: upgrade @dbml/core
 
-1. Change the exact release in `package.json`. Do not use a range.
+1. Change the exact releases of `@dbml/core` and `@dbml/parse` in `package.json`. They must be the same release. Do not
+   use a range.
 2. Run the golden tests in `src/lib/dbml/__fixtures__/` (§15.2).
 3. If the output changed, change the mapping in `lib/dbml/`. Do not change the canvas.
 4. Write the result in the pull request.
